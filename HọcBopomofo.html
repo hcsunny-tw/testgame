@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>注音探險島 | Học Bopomofo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+        
+        .card-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-press {
+            transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-press:active {
+            transform: scale(0.95);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px) rotate(-5deg); }
+            75% { transform: translateX(10px) rotate(5deg); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+        .animate-pop {
+            animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* 拼音槽的空狀態樣式 */
+        .slot-empty {
+            border: 4px dashed #cbd5e1;
+            background-color: rgba(255,255,255,0.5);
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased flex flex-col items-center justify-center p-4">
+
+    <!-- 首頁視圖 -->
+    <div id="home-view" class="w-full max-w-3xl flex flex-col items-center justify-center space-y-8 py-6 transition-opacity duration-500">
+        <div class="text-center floating">
+            <h1 class="text-5xl md:text-6xl font-black text-pink-500 drop-shadow-md mb-2 tracking-widest">注音探險島</h1>
+            <h2 class="text-2xl md:text-3xl font-bold text-blue-600">Học Bopomofo</h2>
+            <p class="text-md text-gray-600 mt-4 bg-white/50 py-2 px-6 rounded-full inline-block font-semibold">Dành cho lớp 3 🇹🇼🇻🇳</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full px-4 mt-4">
+            <!-- 學習按鈕 -->
+            <button onclick="app.switchView('learn')" class="btn-press w-full bg-gradient-to-br from-yellow-300 to-orange-400 rounded-3xl p-6 card-shadow border-4 border-white flex flex-col items-center justify-center group relative overflow-hidden">
+                <span class="text-6xl mb-2 group-hover:scale-110 transition-transform duration-300">📖</span>
+                <span class="text-2xl font-bold text-white drop-shadow-md">聽認學習</span>
+                <span class="text-lg font-bold text-orange-100 mt-1">Học chữ</span>
+            </button>
+
+            <!-- 聽力遊戲按鈕 -->
+            <button onclick="app.switchView('game')" class="btn-press w-full bg-gradient-to-br from-green-400 to-emerald-500 rounded-3xl p-6 card-shadow border-4 border-white flex flex-col items-center justify-center group relative overflow-hidden">
+                <span class="text-6xl mb-2 group-hover:scale-110 transition-transform duration-300">👂</span>
+                <span class="text-2xl font-bold text-white drop-shadow-md">聽力挑戰</span>
+                <span class="text-lg font-bold text-green-100 mt-1">Nghe & Chọn</span>
+            </button>
+            
+            <!-- 拼音遊戲按鈕 -->
+            <button onclick="app.switchView('pinyin')" class="btn-press w-full bg-gradient-to-br from-blue-400 to-indigo-500 rounded-3xl p-6 card-shadow border-4 border-white flex flex-col items-center justify-center group relative overflow-hidden">
+                <span class="text-6xl mb-2 group-hover:scale-110 transition-transform duration-300">🧩</span>
+                <span class="text-2xl font-bold text-white drop-shadow-md">拼音遊戲</span>
+                <span class="text-lg font-bold text-blue-100 mt-1">Ghép vần</span>
+            </button>
+
+            <!-- 常用語按鈕 (新功能) -->
+            <button onclick="app.switchView('phrases')" class="btn-press w-full bg-gradient-to-br from-purple-400 to-fuchsia-500 rounded-3xl p-6 card-shadow border-4 border-white flex flex-col items-center justify-center group relative overflow-hidden">
+                <span class="text-6xl mb-2 group-hover:scale-110 transition-transform duration-300">💬</span>
+                <span class="text-2xl font-bold text-white drop-shadow-md">生活用語</span>
+                <span class="text-lg font-bold text-purple-100 mt-1">Từ vựng giao tiếp</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 學習視圖 -->
+    <div id="learn-view" class="w-full max-w-5xl hidden flex-col items-center py-4 transition-opacity duration-500">
+        <div class="w-full flex justify-between items-center mb-4 px-4">
+            <button onclick="app.switchView('home')" class="btn-press bg-white/80 hover:bg-white text-blue-600 font-bold py-2 px-4 rounded-full shadow-md flex items-center gap-2">
+                <span class="text-xl">🏠</span> <span class="hidden sm:inline">Trang chủ (返回)</span>
+            </button>
+            <div class="text-center">
+                <h2 class="text-2xl font-black text-pink-600">聽聽看，認認看</h2>
+            </div>
+            <div class="w-12 sm:w-24"></div>
+        </div>
+
+        <div class="flex gap-4 mb-4 overflow-x-auto w-full px-4 py-2 no-scrollbar justify-start sm:justify-center">
+            <button onclick="app.renderLearnGrid('consonants')" id="tab-consonants" class="btn-press whitespace-nowrap bg-blue-500 text-white font-bold py-2 px-6 rounded-full shadow-md border-2 border-transparent">聲母 (Phụ âm)</button>
+            <button onclick="app.renderLearnGrid('vowels')" id="tab-vowels" class="btn-press whitespace-nowrap bg-white text-pink-500 font-bold py-2 px-6 rounded-full shadow-md border-2 border-transparent hover:border-pink-200">韻母 (Nguyên âm)</button>
+            <button onclick="app.renderLearnGrid('tones')" id="tab-tones" class="btn-press whitespace-nowrap bg-white text-green-500 font-bold py-2 px-6 rounded-full shadow-md border-2 border-transparent hover:border-green-200">聲調 (Thanh điệu)</button>
+        </div>
+
+        <div id="learn-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-3 w-full px-4 pb-10">
+            <!-- 閃卡由 JS 動態生成 -->
+        </div>
+    </div>
+
+    <!-- 聽力遊戲視圖 -->
+    <div id="game-view" class="w-full max-w-2xl hidden flex-col items-center py-4 transition-opacity duration-500">
+        <div class="w-full flex justify-between items-center mb-6 px-4">
+            <button onclick="app.switchView('home')" class="btn-press bg-white/80 hover:bg-white text-green-600 font-bold py-2 px-4 rounded-full shadow-md flex items-center gap-2">
+                <span class="text-xl">🏠</span>
+            </button>
+            <div class="bg-yellow-300 text-yellow-900 font-black py-2 px-6 rounded-full shadow-inner border-2 border-yellow-400">
+                ⭐ Điểm (分數): <span id="game-score" class="text-2xl">0</span>
+            </div>
+        </div>
+
+        <div class="w-full bg-white/70 backdrop-blur-md rounded-[3rem] p-6 shadow-2xl border-4 border-white flex flex-col items-center">
+            <h2 class="text-2xl font-black text-green-600 mb-1">聽聲音，選正確的字！</h2>
+            <h3 class="text-lg font-bold text-gray-500 mb-6">Nghe và chọn chữ đúng!</h3>
+
+            <button id="btn-play-sound" onclick="app.playGameSound()" class="btn-press relative group mb-8 w-32 h-32 bg-gradient-to-b from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-[0_8px_0_#047857] active:shadow-[0_0px_0_#047857] active:translate-y-[8px] transition-all">
+                <div class="absolute inset-0 bg-white/20 rounded-full animate-ping opacity-50 group-hover:opacity-100"></div>
+                <span class="text-6xl">🔊</span>
+            </button>
+
+            <div id="game-message" class="h-10 text-xl font-black mb-4 opacity-0 transition-opacity"></div>
+
+            <div id="game-options" class="grid grid-cols-3 gap-3 w-full">
+                <!-- 選項由 JS 動態生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 拼音遊戲視圖 (新功能) -->
+    <div id="pinyin-view" class="w-full max-w-3xl hidden flex-col items-center py-4 transition-opacity duration-500">
+        <div class="w-full flex justify-between items-center mb-4 px-4">
+            <button onclick="app.switchView('home')" class="btn-press bg-white/80 hover:bg-white text-indigo-600 font-bold py-2 px-4 rounded-full shadow-md flex items-center gap-2">
+                <span class="text-xl">🏠</span>
+            </button>
+            <div class="bg-yellow-300 text-yellow-900 font-black py-2 px-6 rounded-full shadow-inner border-2 border-yellow-400">
+                ⭐ Điểm (分數): <span id="pinyin-score" class="text-2xl">0</span>
+            </div>
+        </div>
+
+        <div class="w-full bg-white/70 backdrop-blur-md rounded-[2rem] p-4 sm:p-6 shadow-2xl border-4 border-white flex flex-col items-center">
+            <h2 class="text-2xl font-black text-indigo-600 mb-1">聽單字，拼注音！</h2>
+            <h3 class="text-lg font-bold text-gray-500 mb-4">Nghe từ và ghép vần!</h3>
+
+            <!-- 聲音與提示區 -->
+            <div class="flex items-center gap-6 mb-6 bg-indigo-50 px-6 py-3 rounded-2xl border-2 border-indigo-100">
+                <button id="btn-play-pinyin" onclick="app.playPinyinSound()" class="btn-press w-16 h-16 bg-indigo-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-600 transition-colors">
+                    <span class="text-3xl">🔊</span>
+                </button>
+                <div class="text-center">
+                    <div id="pinyin-target-word" class="text-4xl font-black text-gray-800"></div>
+                    <div id="pinyin-target-meaning" class="text-lg font-bold text-indigo-600 mt-1"></div>
+                </div>
+            </div>
+
+            <div id="pinyin-message" class="h-8 text-xl font-black mb-2 opacity-0 transition-opacity"></div>
+
+            <!-- 拼音放置槽 (直式排列，右側聲調) -->
+            <div class="flex items-center justify-center gap-3 mb-8">
+                <!-- 左側直行：聲母(上)與韻母(下) -->
+                <div class="flex flex-col gap-2">
+                    <!-- 聲母槽 -->
+                    <div id="slot-1" onclick="app.clearPinyinSlot(1)" class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl slot-empty flex items-center justify-center text-6xl font-black text-blue-500 cursor-pointer transition-all hover:bg-red-50 relative group">
+                        <span class="absolute top-1 text-xs text-gray-400 font-bold hidden group-hover:block">點擊取消</span>
+                    </div>
+                    <!-- 韻母槽 -->
+                    <div id="slot-2" onclick="app.clearPinyinSlot(2)" class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl slot-empty flex items-center justify-center text-6xl font-black text-pink-500 cursor-pointer transition-all hover:bg-red-50 relative group">
+                        <span class="absolute top-1 text-xs text-gray-400 font-bold hidden group-hover:block">點擊取消</span>
+                    </div>
+                </div>
+                <!-- 右側：聲調 (靠下對齊韻母) -->
+                <div class="mt-24 sm:mt-28">
+                    <!-- 聲調槽 -->
+                    <div id="slot-3" onclick="app.clearPinyinSlot(3)" class="w-16 h-20 sm:w-20 sm:h-24 rounded-2xl slot-empty flex items-center justify-center text-5xl font-black text-green-500 cursor-pointer transition-all hover:bg-red-50 relative group">
+                        <span class="absolute top-1 text-xs text-gray-400 font-bold hidden group-hover:block">取消</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 候選字區 -->
+            <div class="w-full flex flex-col gap-4">
+                <div class="bg-blue-50 p-3 rounded-2xl">
+                    <div class="text-xs font-bold text-blue-400 mb-2 text-center">選一個聲母 (Chọn phụ âm)</div>
+                    <div id="pinyin-options-1" class="flex justify-center gap-3"></div>
+                </div>
+                <div class="bg-pink-50 p-3 rounded-2xl">
+                    <div class="text-xs font-bold text-pink-400 mb-2 text-center">選一個韻母 (Chọn nguyên âm)</div>
+                    <div id="pinyin-options-2" class="flex justify-center gap-3"></div>
+                </div>
+                <div class="bg-green-50 p-3 rounded-2xl">
+                    <div class="text-xs font-bold text-green-500 mb-2 text-center">選一個聲調 (Chọn thanh điệu)</div>
+                    <div id="pinyin-options-3" class="flex justify-center gap-3"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="phrases-view" class="w-full max-w-4xl hidden flex-col items-center py-4 transition-opacity duration-500">
+        <div class="w-full flex justify-between items-center mb-6 px-4">
+            <button onclick="app.switchView('home')" class="btn-press bg-white/80 hover:bg-white text-purple-600 font-bold py-2 px-4 rounded-full shadow-md flex items-center gap-2">
+                <span class="text-xl">🏠</span> <span class="hidden sm:inline">Trang chủ (返回)</span>
+            </button>
+            <div class="text-center">
+                <h2 class="text-2xl font-black text-purple-600">生活常用語</h2>
+                <h3 class="text-md font-bold text-purple-400">Từ vựng giao tiếp</h3>
+            </div>
+            <div class="w-12 sm:w-24"></div>
+        </div>
+
+        <div id="phrases-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full px-4 pb-10">
+            <!-- 常用語卡片由 JS 動態生成 -->
+        </div>
+    </div>
+
+    <!-- 彈出視窗 -->
+    <div id="custom-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-11/12 text-center transform scale-95 transition-transform" id="modal-content">
+            <div class="text-6xl mb-4 animate-bounce" id="modal-icon">🎉</div>
+            <h3 class="text-2xl font-black text-gray-800 mb-2" id="modal-title">太棒了！</h3>
+            <p class="text-lg text-gray-600 mb-6 font-bold" id="modal-desc">Bạn làm rất tốt!</p>
+            <button onclick="app.closeModal()" class="btn-press w-full bg-blue-500 text-white font-bold py-4 rounded-2xl text-xl shadow-lg shadow-blue-500/30">繼續 Tiếp tục</button>
+        </div>
+    </div>
+
+    <script>
+        // 注音資料庫 (擴充至完整的 37 個符號 + 5個聲調)
+        const zhuyinData = {
+            consonants: [
+                { symbol: 'ㄅ', hint: 'b', teachingSound: 'ㄅ' },
+                { symbol: 'ㄆ', hint: 'p', teachingSound: 'ㄆ' },
+                { symbol: 'ㄇ', hint: 'm', teachingSound: '呣' },
+                { symbol: 'ㄈ', hint: 'f / ph', teachingSound: 'ㄈ' },
+                { symbol: 'ㄉ', hint: 'đ', teachingSound: 'ㄉ' },
+                { symbol: 'ㄊ', hint: 'th', teachingSound: 'ㄊ' },
+                { symbol: 'ㄋ', hint: 'n', teachingSound: 'ㄋ' },
+                { symbol: 'ㄌ', hint: 'l', teachingSound: 'ㄌ' },
+                { symbol: 'ㄍ', hint: 'g', teachingSound: 'ㄍ' },
+                { symbol: 'ㄎ', hint: 'kh', teachingSound: 'ㄎ' },
+                { symbol: 'ㄏ', hint: 'h', teachingSound: 'ㄏ' },
+                { symbol: 'ㄐ', hint: 'gi/ch', teachingSound: 'ㄐ' },
+                { symbol: 'ㄑ', hint: 'ch', teachingSound: 'ㄑ' },
+                { symbol: 'ㄒ', hint: 'x', teachingSound: 'ㄒ' },
+                { symbol: 'ㄓ', hint: 'tr', teachingSound: 'ㄓ' },
+                { symbol: 'ㄔ', hint: 'ch', teachingSound: 'ㄔ' },
+                { symbol: 'ㄕ', hint: 's', teachingSound: 'ㄕ' },
+                { symbol: 'ㄖ', hint: 'r', teachingSound: 'ㄖ' },
+                { symbol: 'ㄗ', hint: 'z', teachingSound: 'ㄗ' },
+                { symbol: 'ㄘ', hint: 'c', teachingSound: 'ㄘ' },
+                { symbol: 'ㄙ', hint: 's', teachingSound: 'ㄙ' }
+            ],
+            vowels: [
+                { symbol: 'ㄧ', hint: 'i', teachingSound: 'ㄧ' },
+                { symbol: 'ㄨ', hint: 'u', teachingSound: 'ㄨ' },
+                { symbol: 'ㄩ', hint: 'uy', teachingSound: 'ㄩ' },
+                { symbol: 'ㄚ', hint: 'a', teachingSound: 'ㄚ' },
+                { symbol: 'ㄛ', hint: 'o', teachingSound: 'ㄛ' },
+                { symbol: 'ㄜ', hint: 'ơ', teachingSound: 'ㄜ' },
+                { symbol: 'ㄝ', hint: 'e', teachingSound: 'ㄝ' },
+                { symbol: 'ㄞ', hint: 'ai', teachingSound: 'ㄞ' },
+                { symbol: 'ㄟ', hint: 'ây', teachingSound: 'ㄟ' },
+                { symbol: 'ㄠ', hint: 'ao', teachingSound: 'ㄠ' },
+                { symbol: 'ㄡ', hint: 'âu', teachingSound: 'ㄡ' },
+                { symbol: 'ㄢ', hint: 'an', teachingSound: 'ㄢ' },
+                { symbol: 'ㄣ', hint: 'ân', teachingSound: 'ㄣ' },
+                { symbol: 'ㄤ', hint: 'ang', teachingSound: 'ㄤ' },
+                { symbol: 'ㄥ', hint: 'âng', teachingSound: 'ㄥ' },
+                { symbol: 'ㄦ', hint: 'er', teachingSound: 'ㄦ' }
+            ],
+            tones: [
+                { symbol: ' ', display: '—', hint: 'Thanh ngang', teachingSound: '第一聲' },
+                { symbol: 'ˊ', display: 'ˊ', hint: 'Thanh sắc', teachingSound: '第二聲' },
+                { symbol: 'ˇ', display: 'ˇ', hint: 'Thanh hỏi/ngã', teachingSound: '第三聲' },
+                { symbol: 'ˋ', display: 'ˋ', hint: 'Thanh huyền/nặng', teachingSound: '第四聲' },
+                { symbol: '˙', display: '˙', hint: 'Khinh thanh', teachingSound: '輕聲' }
+            ]
+        };
+
+        // 拼音遊戲題庫 (更新為三段式：聲母, 韻母, 聲調)
+        const pinyinWords = [
+            { word: '八', parts: ['ㄅ', 'ㄚ', ' '], meaning: 'Số 8', emoji: '8️⃣' },
+            { word: '貓', parts: ['ㄇ', 'ㄠ', ' '], meaning: 'Mèo', emoji: '🐱' },
+            { word: '狗', parts: ['ㄍ', 'ㄡ', 'ˇ'], meaning: 'Chó', emoji: '🐶' },
+            { word: '豬', parts: ['ㄓ', 'ㄨ', ' '], meaning: 'Lợn', emoji: '🐷' },
+            { word: '車', parts: ['ㄔ', 'ㄜ', ' '], meaning: 'Xe', emoji: '🚗' },
+            { word: '樹', parts: ['ㄕ', 'ㄨ', 'ˋ'], meaning: 'Cây', emoji: '🌳' },
+            { word: '草', parts: ['ㄘ', 'ㄠ', 'ˇ'], meaning: 'Cỏ', emoji: '🌿' },
+            { word: '海', parts: ['ㄏ', 'ㄞ', 'ˇ'], meaning: 'Biển', emoji: '🌊' },
+            { word: '猴', parts: ['ㄏ', 'ㄡ', 'ˊ'], meaning: 'Khỉ', emoji: '🐒' },
+            { word: '兔', parts: ['ㄊ', 'ㄨ', 'ˋ'], meaning: 'Thỏ', emoji: '🐰' }
+        ];
+
+        const phrasesData = [
+            { chinese: '你好', zhuyin: 'ㄋㄧˇ ㄏㄠˇ', vn: 'Xin chào', emoji: '👋' },
+            { chinese: '謝謝', zhuyin: 'ㄒㄧㄝˋ ㄒㄧㄝ˙', vn: 'Cảm ơn', emoji: '🙏' },
+            { chinese: '對不起', zhuyin: 'ㄉㄨㄟˋ ㄅㄨˋ ㄑㄧˇ', vn: 'Xin lỗi', emoji: '🙇' },
+            { chinese: '再見', zhuyin: 'ㄗㄞˋ ㄐㄧㄢˋ', vn: 'Tạm biệt', emoji: '👋' },
+            { chinese: '老師好', zhuyin: 'ㄌㄠˇ ㄕ ㄏㄠˇ', vn: 'Em chào cô/thầy', emoji: '👩‍🏫' },
+            { chinese: '不客氣', zhuyin: 'ㄅㄨˊ ㄎㄜˋ ㄑㄧˋ', vn: 'Không có gì', emoji: '😊' },
+            { chinese: '這是我', zhuyin: 'ㄓㄜˋ ㄕˋ ㄨㄛˇ', vn: 'Đây là tôi', emoji: '🙋' },
+            { chinese: '好朋友', zhuyin: 'ㄏㄠˇ ㄆㄥˊ ㄧㄡˇ', vn: 'Bạn tốt', emoji: '🤝' },
+            { chinese: '對', zhuyin: 'ㄉㄨㄟˋ', vn: 'Đúng', emoji: '⭕' },
+            { chinese: '不對', zhuyin: 'ㄅㄨˊ ㄉㄨㄟˋ', vn: 'Không đúng', emoji: '❌' }
+        ];
+
+        const app = {
+            // 加入聲調供學習與辨識
+            allSymbols: [...zhuyinData.consonants, ...zhuyinData.vowels, ...zhuyinData.tones],
+            
+            // 聽力遊戲狀態
+            gameTarget: null,
+            gameScore: 0,
+            isPlaying: false,
+
+            // 拼音遊戲狀態
+            pinyinScore: 0,
+            currentWord: null,
+            slot1Value: null,
+            slot2Value: null,
+            slot3Value: null, // 新增聲調槽
+            isPinyinPlaying: false,
+
+            // 語音合成引擎
+            speak(text, rate = 0.8) {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel(); 
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'zh-TW';
+                    utterance.rate = rate; 
+                    utterance.pitch = 1.2;
+                    window.speechSynthesis.speak(utterance);
+                }
+            },
+
+            // 視圖切換邏輯
+            switchView(viewName) {
+                document.getElementById('home-view').classList.replace('flex', 'hidden');
+                document.getElementById('learn-view').classList.replace('flex', 'hidden');
+                document.getElementById('game-view').classList.replace('flex', 'hidden');
+                document.getElementById('pinyin-view').classList.replace('flex', 'hidden');
+                document.getElementById('phrases-view').classList.replace('flex', 'hidden');
+
+                const targetView = document.getElementById(`${viewName}-view`);
+                targetView.classList.replace('hidden', 'flex');
+
+                if (viewName === 'learn') {
+                    this.renderLearnGrid('consonants');
+                } else if (viewName === 'game') {
+                    this.gameScore = 0;
+                    this.updateScore('game');
+                    this.startNewGameRound();
+                } else if (viewName === 'pinyin') {
+                    this.pinyinScore = 0;
+                    this.updateScore('pinyin');
+                    this.startPinyinRound();
+                } else if (viewName === 'phrases') {
+                    this.renderPhrases();
+                }
+
+                if ('speechSynthesis' in window) {
+                    const initUtterance = new SpeechSynthesisUtterance('');
+                    initUtterance.volume = 0;
+                    window.speechSynthesis.speak(initUtterance);
+                }
+            },
+
+            // 學習區渲染
+            renderLearnGrid(category) {
+                const grid = document.getElementById('learn-grid');
+                grid.innerHTML = ''; 
+
+                document.getElementById('tab-consonants').className = category === 'consonants' ? 'btn-press whitespace-nowrap bg-blue-500 text-white font-bold py-2 px-6 rounded-full shadow-md border-2 border-transparent' : 'btn-press whitespace-nowrap bg-white text-blue-500 font-bold py-2 px-6 rounded-full shadow-md border-2 border-transparent hover:border-blue-200';
+                document.getElementById('tab-vowels').className = category === 'vowels' ? 'btn-press whitespace-nowrap bg-pink-500 text-white font-bold py-2 px-6 rounded-full shadow-md border-2 border-transparent' : 'btn-press whitespace-nowrap bg-white text-pink-500 font-bold py-2 px-6 rounded-full shadow-md border-2 border-transparent hover:border-pink-200';
+                document.getElementById('tab-tones').className = category === 'tones' ? 'btn-press whitespace-nowrap bg-green-500 text-white font-bold py-2 px-6 rounded-full shadow-md border-2 border-transparent' : 'btn-press whitespace-nowrap bg-white text-green-500 font-bold py-2 px-6 rounded-full shadow-md border-2 border-transparent hover:border-green-200';
+
+                const data = zhuyinData[category];
+                data.forEach((item, index) => {
+                    let colorClass = 'text-blue-600 border-blue-200 hover:bg-blue-50';
+                    let activeColor = 'bg-blue-100';
+                    if (category === 'vowels') {
+                        colorClass = 'text-pink-600 border-pink-200 hover:bg-pink-50';
+                        activeColor = 'bg-pink-100';
+                    } else if (category === 'tones') {
+                        colorClass = 'text-green-600 border-green-200 hover:bg-green-50';
+                        activeColor = 'bg-green-100';
+                    }
+
+                    const card = document.createElement('button');
+                    card.className = `btn-press bg-white rounded-2xl p-4 flex flex-col items-center justify-center card-shadow border-2 ${colorClass} transition-colors group relative`;
+                    card.style.animation = `pop 0.3s ease-out ${index * 0.02}s both`;
+
+                    // 若為一聲 (空白)，顯示特別設計的符號
+                    const displaySymbol = item.display || item.symbol;
+
+                    card.innerHTML = `
+                        <div class="text-4xl sm:text-5xl font-black mb-2">${displaySymbol}</div>
+                        <div class="bg-gray-100 text-gray-500 font-bold px-2 py-0.5 rounded text-sm w-full text-center group-hover:bg-gray-200 transition-colors truncate">
+                            ${item.hint}
+                        </div>
+                    `;
+
+                    card.onclick = () => {
+                        this.speak(item.teachingSound);
+                        card.classList.remove('animate-pop');
+                        void card.offsetWidth; 
+                        card.classList.add('animate-pop');
+                        card.classList.add(activeColor);
+                        setTimeout(() => card.classList.remove(activeColor), 300);
+                    };
+
+                    grid.appendChild(card);
+                });
+            },
+
+            // 聽力遊戲邏輯
+            startNewGameRound() {
+                this.isPlaying = true;
+                const targetIndex = Math.floor(Math.random() * this.allSymbols.length);
+                this.gameTarget = this.allSymbols[targetIndex];
+
+                let options = [this.gameTarget];
+                while(options.length < 3) {
+                    const randomOpt = this.allSymbols[Math.floor(Math.random() * this.allSymbols.length)];
+                    if(!options.some(opt => opt.symbol === randomOpt.symbol)) options.push(randomOpt);
+                }
+
+                options.sort(() => Math.random() - 0.5);
+
+                const msgBox = document.getElementById('game-message');
+                msgBox.style.opacity = '0';
+                msgBox.className = "h-10 text-xl font-black mb-4 opacity-0 transition-opacity";
+                
+                const btnPlay = document.getElementById('btn-play-sound');
+                btnPlay.classList.add('floating');
+
+                const container = document.getElementById('game-options');
+                container.innerHTML = '';
+                
+                options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = "btn-press bg-white border-4 border-gray-200 rounded-3xl h-24 sm:h-32 text-5xl sm:text-6xl font-black text-gray-700 card-shadow hover:border-green-400 hover:text-green-500 transition-all";
+                    btn.innerText = opt.display || opt.symbol;
+                    btn.onclick = () => this.checkAnswer(opt, btn);
+                    container.appendChild(btn);
+                });
+
+                setTimeout(() => this.playGameSound(), 500);
+            },
+
+            playGameSound() {
+                if(!this.gameTarget) return;
+                const btn = document.getElementById('btn-play-sound');
+                btn.classList.remove('floating');
+                btn.style.transform = 'scale(0.9)';
+                setTimeout(() => btn.style.transform = '', 150);
+                this.speak(this.gameTarget.teachingSound);
+            },
+
+            checkAnswer(selectedOption, buttonElement) {
+                if(!this.isPlaying) return;
+                const msgBox = document.getElementById('game-message');
+                msgBox.style.opacity = '1';
+
+                if(selectedOption.symbol === this.gameTarget.symbol) {
+                    this.isPlaying = false;
+                    this.gameScore += 10;
+                    this.updateScore('game');
+                    
+                    buttonElement.classList.replace('border-gray-200', 'border-green-500');
+                    buttonElement.classList.add('bg-green-100', 'text-green-600', 'animate-pop');
+                    msgBox.innerText = "✨ Đúng rồi! (太棒了) ✨";
+                    msgBox.classList.add("text-green-500");
+                    this.speak("答對了");
+
+                    setTimeout(() => this.startNewGameRound(), 1500);
+                } else {
+                    buttonElement.classList.add('animate-shake', 'border-red-400', 'text-red-500', 'bg-red-50');
+                    msgBox.innerText = "❌ Thử lại nhé! (再試一次)";
+                    msgBox.classList.add("text-red-500");
+
+                    setTimeout(() => {
+                        buttonElement.classList.remove('animate-shake', 'border-red-400', 'text-red-500', 'bg-red-50');
+                        msgBox.style.opacity = '0';
+                        msgBox.classList.remove("text-red-500");
+                    }, 1000);
+                }
+            },
+
+            // 拼音遊戲邏輯
+            startPinyinRound() {
+                this.isPinyinPlaying = true;
+                this.slot1Value = null;
+                this.slot2Value = null;
+                this.slot3Value = null;
+                this.updatePinyinSlotsUI();
+
+                this.currentWord = pinyinWords[Math.floor(Math.random() * pinyinWords.length)];
+                
+                document.getElementById('pinyin-target-word').innerText = `${this.currentWord.emoji} ${this.currentWord.word}`;
+                document.getElementById('pinyin-target-meaning').innerText = this.currentWord.meaning;
+                
+                const msgBox = document.getElementById('pinyin-message');
+                msgBox.style.opacity = '0';
+                msgBox.className = "h-8 text-xl font-black mb-2 opacity-0 transition-opacity";
+
+                // 產生干擾選項 (聲母)
+                let cOptions = [this.currentWord.parts[0]];
+                while(cOptions.length < 3) {
+                    let rand = zhuyinData.consonants[Math.floor(Math.random() * zhuyinData.consonants.length)].symbol;
+                    if(!cOptions.includes(rand)) cOptions.push(rand);
+                }
+                cOptions.sort(() => Math.random() - 0.5);
+
+                // 產生干擾選項 (韻母)
+                let vOptions = [this.currentWord.parts[1]];
+                while(vOptions.length < 3) {
+                    let rand = zhuyinData.vowels[Math.floor(Math.random() * zhuyinData.vowels.length)].symbol;
+                    if(!vOptions.includes(rand)) vOptions.push(rand);
+                }
+                vOptions.sort(() => Math.random() - 0.5);
+
+                // 產生干擾選項 (聲調)
+                let tOptions = [this.currentWord.parts[2]];
+                while(tOptions.length < 3) {
+                    let rand = zhuyinData.tones[Math.floor(Math.random() * zhuyinData.tones.length)].symbol;
+                    if(!tOptions.includes(rand)) tOptions.push(rand);
+                }
+                tOptions.sort(() => Math.random() - 0.5);
+
+                this.renderPinyinOptions(cOptions, vOptions, tOptions);
+                setTimeout(() => this.playPinyinSound(), 500);
+            },
+
+            renderPinyinOptions(cOptions, vOptions, tOptions) {
+                const conContainer = document.getElementById('pinyin-options-1');
+                const vowContainer = document.getElementById('pinyin-options-2');
+                const toneContainer = document.getElementById('pinyin-options-3');
+                conContainer.innerHTML = '';
+                vowContainer.innerHTML = '';
+                toneContainer.innerHTML = '';
+
+                cOptions.forEach(sym => {
+                    const btn = document.createElement('button');
+                    btn.className = "btn-press bg-white border-2 border-blue-200 text-blue-600 font-black text-3xl sm:text-4xl w-16 h-16 sm:w-20 sm:h-20 rounded-xl shadow-md hover:bg-blue-100 transition-colors";
+                    btn.innerText = sym;
+                    btn.onclick = () => this.selectPinyin(1, sym);
+                    conContainer.appendChild(btn);
+                });
+
+                vOptions.forEach(sym => {
+                    const btn = document.createElement('button');
+                    btn.className = "btn-press bg-white border-2 border-pink-200 text-pink-600 font-black text-3xl sm:text-4xl w-16 h-16 sm:w-20 sm:h-20 rounded-xl shadow-md hover:bg-pink-100 transition-colors";
+                    btn.innerText = sym;
+                    btn.onclick = () => this.selectPinyin(2, sym);
+                    vowContainer.appendChild(btn);
+                });
+
+                tOptions.forEach(sym => {
+                    const btn = document.createElement('button');
+                    btn.className = "btn-press bg-white border-2 border-green-200 text-green-600 font-black text-3xl sm:text-4xl w-16 h-16 sm:w-20 sm:h-20 rounded-xl shadow-md hover:bg-green-100 transition-colors";
+                    btn.innerText = sym === ' ' ? '—' : sym;
+                    btn.onclick = () => this.selectPinyin(3, sym);
+                    toneContainer.appendChild(btn);
+                });
+            },
+
+            playPinyinSound() {
+                if(!this.currentWord) return;
+                const btn = document.getElementById('btn-play-pinyin');
+                btn.style.transform = 'scale(0.9)';
+                setTimeout(() => btn.style.transform = '', 150);
+                this.speak(this.currentWord.word, 1.0);
+            },
+
+            selectPinyin(slotNum, symbol) {
+                if(!this.isPinyinPlaying) return;
+                
+                let soundObj = this.allSymbols.find(s => s.symbol === symbol);
+                if(soundObj) this.speak(soundObj.teachingSound, 0.9);
+
+                if(slotNum === 1) this.slot1Value = symbol;
+                if(slotNum === 2) this.slot2Value = symbol;
+                if(slotNum === 3) this.slot3Value = symbol;
+
+                this.updatePinyinSlotsUI();
+
+                if(this.slot1Value && this.slot2Value && this.slot3Value !== null) {
+                    this.checkPinyinAnswer();
+                }
+            },
+
+            clearPinyinSlot(slotNum) {
+                if(!this.isPinyinPlaying) return;
+                if(slotNum === 1) this.slot1Value = null;
+                if(slotNum === 2) this.slot2Value = null;
+                if(slotNum === 3) this.slot3Value = null;
+                this.updatePinyinSlotsUI();
+            },
+
+            updatePinyinSlotsUI() {
+                const s1 = document.getElementById('slot-1');
+                const s2 = document.getElementById('slot-2');
+                const s3 = document.getElementById('slot-3');
+
+                const getSlotHTML = (val, display) => `${display}<span class="absolute top-1 text-xs text-gray-400 font-bold hidden group-hover:block">取消</span>`;
+                const emptyHTML = `<span class="opacity-30">?</span>`;
+
+                if(this.slot1Value) {
+                    s1.classList.remove('slot-empty');
+                    s1.classList.add('bg-white', 'border-4', 'border-blue-400', 'shadow-lg');
+                    s1.innerHTML = getSlotHTML(this.slot1Value, this.slot1Value);
+                } else {
+                    s1.className = "w-24 h-24 sm:w-28 sm:h-28 rounded-2xl slot-empty flex items-center justify-center text-6xl font-black text-blue-500 cursor-pointer transition-all hover:bg-red-50 relative group";
+                    s1.innerHTML = emptyHTML;
+                }
+
+                if(this.slot2Value) {
+                    s2.classList.remove('slot-empty');
+                    s2.classList.add('bg-white', 'border-4', 'border-pink-400', 'shadow-lg');
+                    s2.innerHTML = getSlotHTML(this.slot2Value, this.slot2Value);
+                } else {
+                    s2.className = "w-24 h-24 sm:w-28 sm:h-28 rounded-2xl slot-empty flex items-center justify-center text-6xl font-black text-pink-500 cursor-pointer transition-all hover:bg-red-50 relative group";
+                    s2.innerHTML = emptyHTML;
+                }
+
+                if(this.slot3Value !== null) {
+                    s3.classList.remove('slot-empty');
+                    s3.classList.add('bg-white', 'border-4', 'border-green-400', 'shadow-lg');
+                    s3.innerHTML = getSlotHTML(this.slot3Value, this.slot3Value === ' ' ? '—' : this.slot3Value);
+                } else {
+                    s3.className = "w-16 h-20 sm:w-20 sm:h-24 rounded-2xl slot-empty flex items-center justify-center text-5xl font-black text-green-500 cursor-pointer transition-all hover:bg-red-50 relative group";
+                    s3.innerHTML = emptyHTML;
+                }
+            },
+
+            checkPinyinAnswer() {
+                this.isPinyinPlaying = false; 
+                const msgBox = document.getElementById('pinyin-message');
+                const s1 = document.getElementById('slot-1');
+                const s2 = document.getElementById('slot-2');
+                const s3 = document.getElementById('slot-3');
+                
+                msgBox.style.opacity = '1';
+
+                if(this.slot1Value === this.currentWord.parts[0] && 
+                   this.slot2Value === this.currentWord.parts[1] && 
+                   this.slot3Value === this.currentWord.parts[2]) {
+                    
+                    this.pinyinScore += 20;
+                    this.updateScore('pinyin');
+                    
+                    s1.classList.replace('border-blue-400', 'border-green-500');
+                    s2.classList.replace('border-pink-400', 'border-green-500');
+                    s3.classList.replace('border-green-400', 'border-green-500');
+                    s1.classList.add('animate-pop', 'bg-green-100');
+                    s2.classList.add('animate-pop', 'bg-green-100');
+                    s3.classList.add('animate-pop', 'bg-green-100');
+                    
+                    msgBox.innerText = "✨ Hoàn hảo! (拼對了) ✨";
+                    msgBox.classList.add("text-green-500");
+
+                    setTimeout(() => {
+                        let cSound = this.allSymbols.find(s => s.symbol === this.slot1Value)?.teachingSound || '';
+                        let vSound = this.allSymbols.find(s => s.symbol === this.slot2Value)?.teachingSound || '';
+                        let tSound = this.allSymbols.find(s => s.symbol === this.slot3Value)?.teachingSound || '';
+                        this.speak(`${cSound} ${vSound} ${tSound} ${this.currentWord.word}`, 0.6);
+                    }, 300);
+
+                    setTimeout(() => this.startPinyinRound(), 2500);
+
+                } else {
+                    s1.classList.add('animate-shake', 'border-red-400', 'bg-red-50');
+                    s2.classList.add('animate-shake', 'border-red-400', 'bg-red-50');
+                    s3.classList.add('animate-shake', 'border-red-400', 'bg-red-50');
+                    
+                    msgBox.innerText = "❌ Chưa đúng rồi! (再想一下)";
+                    msgBox.classList.add("text-red-500");
+
+                    setTimeout(() => {
+                        s1.classList.remove('animate-shake', 'border-red-400', 'bg-red-50');
+                        s2.classList.remove('animate-shake', 'border-red-400', 'bg-red-50');
+                        s3.classList.remove('animate-shake', 'border-red-400', 'bg-red-50');
+                        this.slot1Value = null;
+                        this.slot2Value = null;
+                        this.slot3Value = null;
+                        this.updatePinyinSlotsUI();
+                        
+                        msgBox.style.opacity = '0';
+                        msgBox.classList.remove("text-red-500");
+                        
+                        this.isPinyinPlaying = true;
+                    }, 1200);
+                }
+            },
+
+            renderPhrases() {
+                const grid = document.getElementById('phrases-grid');
+                grid.innerHTML = '';
+                
+                phrasesData.forEach((item, index) => {
+                    const card = document.createElement('button');
+                    card.className = "btn-press bg-white rounded-3xl p-4 sm:p-6 flex items-center justify-between card-shadow border-4 border-purple-100 hover:border-purple-300 transition-all text-left w-full group";
+                    card.style.animation = `pop 0.3s ease-out ${index * 0.05}s both`;
+                    
+                    card.innerHTML = `
+                        <div class="flex items-center gap-4">
+                            <div class="text-5xl group-hover:scale-110 transition-transform">${item.emoji}</div>
+                            <div>
+                                <div class="text-2xl font-black text-gray-800">${item.chinese}</div>
+                                <div class="text-lg font-bold text-purple-500 my-0.5 tracking-widest">${item.zhuyin}</div>
+                                <div class="text-md font-bold text-gray-500">${item.vn}</div>
+                            </div>
+                        </div>
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xl sm:text-2xl group-hover:bg-purple-500 group-hover:text-white transition-colors flex-shrink-0">
+                            🔊
+                        </div>
+                    `;
+                    
+                    card.onclick = () => {
+                        this.speak(item.chinese, 0.85); // 稍微放慢，讓孩子聽清楚
+                    };
+                    
+                    grid.appendChild(card);
+                });
+            },
+
+            updateScore(type) {
+                if(type === 'game') {
+                    document.getElementById('game-score').innerText = this.gameScore;
+                    if(this.gameScore > 0 && this.gameScore % 50 === 0) this.showModal("🎉", "太厲害了！", "Bạn thật xuất sắc!");
+                } else if(type === 'pinyin') {
+                    document.getElementById('pinyin-score').innerText = this.pinyinScore;
+                    if(this.pinyinScore > 0 && this.pinyinScore % 100 === 0) this.showModal("🏆", "拼音大師！", "Chuyên gia ghép vần!");
+                }
+            },
+
+            showModal(icon, title, desc) {
+                document.getElementById('modal-icon').innerText = icon;
+                document.getElementById('modal-title').innerText = title;
+                document.getElementById('modal-desc').innerText = desc;
+                
+                const modal = document.getElementById('custom-modal');
+                const content = document.getElementById('modal-content');
+                modal.classList.replace('hidden', 'flex');
+                setTimeout(() => content.classList.replace('scale-95', 'scale-100'), 10);
+            },
+
+            closeModal() {
+                const modal = document.getElementById('custom-modal');
+                const content = document.getElementById('modal-content');
+                content.classList.replace('scale-100', 'scale-95');
+                setTimeout(() => modal.classList.replace('flex', 'hidden'), 200);
+            }
+        };
+
+        window.onload = () => {
+            app.switchView('home');
+        };
+    </script>
+</body>
+</html>
