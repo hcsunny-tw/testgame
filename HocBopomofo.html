@@ -86,9 +86,9 @@
             <button onclick="switchMode('consonants')" id="btn-consonants" class="nav-btn btn-3d bg-blue-100 text-blue-700 py-4 sm:py-5 rounded-[2rem] text-xl font-black border-4 border-white">
                 聲母 (Phụ âm)
             </button>
-            <button onclick="switchMode('vowels')" id="btn-vowels" class="nav-btn btn-3d bg-green-100 text-green-700 py-4 sm:py-5 rounded-[2rem] text-xl font-black border-4 border-white">
-                韻母 (Vận âm)
-            </button>
+            <a href="https://www.youtube.com/watch?v=S-H3WJNbf0A" target="_blank" class="nav-btn btn-3d bg-pink-100 text-pink-700 py-4 sm:py-5 flex items-center justify-center rounded-[2rem] text-xl font-black border-4 border-white no-underline transition-all hover:translate-y-[-4px] active:translate-y-[6px]">
+                🎵 注音歌
+            </a>
             <button onclick="switchMode('phrases')" id="btn-phrases" class="nav-btn btn-3d bg-purple-100 text-purple-700 py-4 sm:py-5 rounded-[2rem] text-xl font-black border-4 border-white">
                 生活用語
             </button>
@@ -112,10 +112,6 @@
         // 注音資料庫 (移除發音尾音的ㄜ、ㄛ，只保留最乾淨的發音)
         const zhuyinData = {
             consonants: [
-                { symbol: 'ㄅ', vn: 'b', type: 'consonant' },
-                { symbol: 'ㄆ', vn: 'p', type: 'consonant' },
-                { symbol: 'ㄇ', vn: 'm', type: 'consonant' },
-                { symbol: 'ㄈ', vn: 'f (ph)', type: 'consonant' },
                 { symbol: 'ㄉ', vn: 'd (đ)', type: 'consonant' },
                 { symbol: 'ㄊ', vn: 't (th)', type: 'consonant' },
                 { symbol: 'ㄋ', vn: 'n', type: 'consonant' },
@@ -133,24 +129,6 @@
                 { symbol: 'ㄗ', vn: 'z (ch nhẹ)', type: 'consonant' },
                 { symbol: 'ㄘ', vn: 'c (x nhẹ)', type: 'consonant' },
                 { symbol: 'ㄙ', vn: 's (s nhẹ)', type: 'consonant' }
-            ],
-            vowels: [
-                { symbol: 'ㄚ', vn: 'a', type: 'vowel' },
-                { symbol: 'ㄛ', vn: 'o', type: 'vowel' },
-                { symbol: 'ㄜ', vn: 'ơ', type: 'vowel' },
-                { symbol: 'ㄝ', vn: 'e', type: 'vowel' },
-                { symbol: 'ㄞ', vn: 'ai', type: 'vowel' },
-                { symbol: 'ㄟ', vn: 'ây', type: 'vowel' },
-                { symbol: 'ㄠ', vn: 'ao', type: 'vowel' },
-                { symbol: 'ㄡ', vn: 'âu', type: 'vowel' },
-                { symbol: 'ㄢ', vn: 'an', type: 'vowel' },
-                { symbol: 'ㄣ', vn: 'ân', type: 'vowel' },
-                { symbol: 'ㄤ', vn: 'ang', type: 'vowel' },
-                { symbol: 'ㄥ', vn: 'âng', type: 'vowel' },
-                { symbol: 'ㄦ', vn: 'ơr', type: 'vowel' },
-                { symbol: 'ㄧ', vn: 'i / y', type: 'vowel' },
-                { symbol: 'ㄨ', vn: 'u', type: 'vowel' },
-                { symbol: 'ㄩ', vn: 'uy', type: 'vowel' }
             ]
         };
 
@@ -237,11 +215,40 @@
                     { char: '水', zhuyin: ['ㄕ', 'ㄨ', 'ㄟ'], tone: 'ˇ' }
                 ], 
                 vn: 'Uống nước', emoji: '💧' 
+            },
+            { 
+                chinese: [
+                    { char: '早', zhuyin: ['ㄗ', 'ㄠ'], tone: 'ˇ' },
+                    { char: '安', zhuyin: ['ㄢ'], tone: '' }
+                ], 
+                vn: 'Chào buổi sáng', emoji: '🌅' 
+            },
+            { 
+                chinese: [
+                    { char: '午', zhuyin: ['ㄨ'], tone: 'ˇ' },
+                    { char: '安', zhuyin: ['ㄢ'], tone: '' }
+                ], 
+                vn: 'Chào buổi trưa', emoji: '☀️' 
+            },
+            { 
+                chinese: [
+                    { char: '晚', zhuyin: ['ㄨ', 'ㄢ'], tone: 'ˇ' },
+                    { char: '安', zhuyin: ['ㄢ'], tone: '' }
+                ], 
+                vn: 'Chúc ngủ ngon', emoji: '🌙' 
+            },
+            { 
+                chinese: [
+                    { char: '聽', zhuyin: ['ㄊ', 'ㄧ', 'ㄥ'], tone: '' },
+                    { char: '不', zhuyin: ['ㄅ', 'ㄨ'], tone: 'ˋ' },
+                    { char: '懂', zhuyin: ['ㄉ', 'ㄨ', 'ㄥ'], tone: 'ˇ' }
+                ], 
+                vn: 'Không hiểu', emoji: '❓' 
             }
         ];
 
         let currentMode = 'consonants';
-        const allSymbols = [...zhuyinData.consonants, ...zhuyinData.vowels];
+        const allSymbols = [...zhuyinData.consonants];
 
         function playSound(text) {
             if ('speechSynthesis' in window) {
@@ -303,8 +310,8 @@
             const mainContent = document.getElementById('main-content');
             mainContent.innerHTML = ''; // 清空
 
-            // 渲染：聲母 / 韻母 (字母區)
-            if (currentMode === 'consonants' || currentMode === 'vowels') {
+            // 渲染：聲母 (字母區)
+            if (currentMode === 'consonants') {
                 const data = zhuyinData[currentMode];
                 
                 const grid = document.createElement('div');
