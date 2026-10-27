@@ -6,18 +6,24 @@
     <title>注音探險島 (Học Bopomofo)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 載入芫荽注音體 (只用於聲母與韻母卡片) */
-        @import url('https://fonts.googleapis.com/css2?family=Bpmf+Iansui&display=swap');
+        /* 載入「注音芫荽」：國字會直接顯示正確格式的注音 */
+        @import url('https://font.emtech.cc/css/BpmfIansui');
         
         body {
+            font-family: 'Bpmf Iansui', sans-serif !important;
             /* 超可愛的點點背景 */
             background-color: #fdfaf0;
             background-image: radial-gradient(#fde68a 15%, transparent 15%);
             background-size: 24px 24px;
         }
 
-        .font-zhuyin {
-            font-family: 'Bpmf Iansui', sans-serif;
+        .font-zhuyin, .math-word {
+            font-family: 'Bpmf Iansui', sans-serif !important;
+        }
+
+        /* 全站中文與介面文字統一使用注音芫荽 IVS 字型。IVS 會依文字中的變體選擇子顯示對應讀音。 */
+        body, body * {
+            font-family: 'Bpmf Iansui', sans-serif !important;
         }
 
         /* 3D Ｑ彈卡片與按鈕特效 */
@@ -46,6 +52,22 @@
             box-shadow: 0 0 0 0 #f3f4f6;
         }
         
+        /* 數學字卡：縮小尺寸，讓一個畫面可以看到更多內容 */
+        .math-card {
+            min-height: 150px;
+        }
+
+        .math-word {
+            font-size: 2.2rem;
+            line-height: 1.35;
+        }
+
+        @media (min-width: 640px) {
+            .math-word {
+                font-size: 2.5rem;
+            }
+        }
+
         .pulse-animation {
             animation: pulse-soft 2s infinite;
         }
@@ -86,14 +108,17 @@
             <button onclick="switchMode('consonants')" id="btn-consonants" class="nav-btn btn-3d bg-blue-100 text-blue-700 py-4 sm:py-5 rounded-[2rem] text-xl font-black border-4 border-white">
                 聲母 (Phụ âm)
             </button>
-            <a href="https://www.youtube.com/watch?v=S-H3WJNbf0A" target="_blank" class="nav-btn btn-3d bg-pink-100 text-pink-700 py-4 sm:py-5 flex items-center justify-center rounded-[2rem] text-xl font-black border-4 border-white no-underline transition-all hover:translate-y-[-4px] active:translate-y-[6px]">
+            <button onclick="switchMode('song')" id="btn-song" class="nav-btn btn-3d bg-pink-100 text-pink-700 py-4 sm:py-5 flex items-center justify-center rounded-[2rem] text-xl font-black border-4 border-white">
                 🎵 注音歌
-            </a>
+            </button>
             <button onclick="switchMode('phrases')" id="btn-phrases" class="nav-btn btn-3d bg-purple-100 text-purple-700 py-4 sm:py-5 rounded-[2rem] text-xl font-black border-4 border-white">
                 生活用語
             </button>
             <button onclick="switchMode('game')" id="btn-game" class="nav-btn btn-3d bg-yellow-300 text-yellow-800 py-4 sm:py-5 rounded-[2rem] text-xl font-black border-4 border-white flex items-center justify-center gap-2">
                 🎮 聽力挑戰
+            </button>
+            <button onclick="switchMode('math')" id="btn-math" class="nav-btn btn-3d bg-green-100 text-green-700 py-4 sm:py-5 rounded-[2rem] text-xl font-black border-4 border-white flex items-center justify-center gap-2">
+                📚 數學小教室
             </button>
         </nav>
 
@@ -109,6 +134,44 @@
     </div>
 
     <script>
+        // 數學語詞資料庫：提供中文、注音與越南文，適合國小一、二年級學生
+        const mathData = [
+            { category: '🔢 數字', items: [
+                { chinese: '一', zhuyin: ['ㄧ'], tone: 'ˊ', vn: 'một' },
+                { chinese: '二', zhuyin: ['ㄦ'], tone: 'ˋ', vn: 'hai' },
+                { chinese: '三', zhuyin: ['ㄙ', 'ㄢ'], tone: 'ˉ', vn: 'ba' },
+                { chinese: '四', zhuyin: ['ㄙ', 'ˋ'], tone: 'ˋ', vn: 'bốn' },
+                { chinese: '五', zhuyin: ['ㄨ'], tone: 'ˇ', vn: 'năm' },
+                { chinese: '六', zhuyin: ['ㄌ', 'ㄧ', 'ㄡ'], tone: 'ˋ', vn: 'sáu' },
+                { chinese: '七', zhuyin: ['ㄑ', 'ㄧ'], tone: 'ˉ', vn: 'bảy' },
+                { chinese: '八', zhuyin: ['ㄅ', 'ㄚ'], tone: 'ˉ', vn: 'tám' },
+                { chinese: '九', zhuyin: ['ㄐ', 'ㄧ', 'ㄡ'], tone: 'ˇ', vn: 'chín' },
+                { chinese: '十', zhuyin: ['ㄕ'], tone: 'ˊ', vn: 'mười' },
+                { chinese: '二十', zhuyin: ['ㄦ', 'ㄕ'], tone: 'ˋ', vn: 'hai mươi' },
+                { chinese: '三十', zhuyin: ['ㄙ', 'ㄢ', 'ㄕ'], tone: 'ˉ', vn: 'ba mươi' }
+            ]},
+            { category: '🔟 位值', items: [
+                { chinese: '個位', zhuyin: ['ㄍ', 'ㄜ'], tone: 'ˋ', vn: 'hàng đơn vị' },
+                { chinese: '十位', zhuyin: ['ㄕ', 'ㄨ'], tone: 'ˊ', vn: 'hàng chục' },
+                { chinese: '百位', zhuyin: ['ㄅ', 'ㄞ'], tone: 'ˇ', vn: 'hàng trăm' }
+            ]},
+            { category: '➕ 加減', items: [
+                { chinese: '加', zhuyin: ['ㄐ', 'ㄧ', 'ㄚ'], tone: 'ˉ', vn: 'cộng' },
+                { chinese: '減', zhuyin: ['ㄐ', 'ㄧ', 'ㄢ'], tone: 'ˇ', vn: 'trừ' },
+                { chinese: '等於', zhuyin: ['ㄉ', 'ㄥ', 'ㄩ'], tone: 'ˇ', vn: 'bằng' }
+            ]},
+            { category: '📏 長短厚薄', items: [
+                { chinese: '長', zhuyin: ['ㄔ', 'ㄤ'], tone: 'ˊ', vn: 'dài' },
+                { chinese: '短', zhuyin: ['ㄉ', 'ㄨ', 'ㄢ'], tone: 'ˇ', vn: 'ngắn' },
+                { chinese: '厚', zhuyin: ['ㄏ', 'ㄡ'], tone: 'ˋ', vn: 'dày' },
+                { chinese: '薄', zhuyin: ['ㄅ', 'ㄛ'], tone: 'ˊ', vn: 'mỏng' }
+            ]},
+            { category: '📐 線', items: [
+                { chinese: '曲線', zhuyin: ['ㄑ', 'ㄩ', 'ㄒ', 'ㄧ', 'ㄢ'], tone: 'ˇ', vn: 'đường cong' },
+                { chinese: '直線', zhuyin: ['ㄓ', 'ㄓ', 'ㄒ', 'ㄧ', 'ㄢ'], tone: 'ˊ', vn: 'đường thẳng' }
+            ]}
+        ];
+
         // 注音資料庫 (移除發音尾音的ㄜ、ㄛ，只保留最乾淨的發音)
         const zhuyinData = {
             consonants: [
@@ -249,11 +312,16 @@
 
         let currentMode = 'consonants';
         const allSymbols = [...zhuyinData.consonants];
+        const allMathWords = mathData.flatMap(group => group.items);
+
+        // 個別處理多音字：『薄』在本網站的數學語詞中要教 ㄅㄛˊ，
+        // 語音合成改用同音字『博』協助瀏覽器穩定念出正確讀音。
+        const speechTextMap = { '薄': '博' };
 
         function playSound(text) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
+                const utterance = new SpeechSynthesisUtterance(speechTextMap[text] || text);
                 utterance.lang = 'zh-TW';
                 window.speechSynthesis.speak(utterance);
             }
@@ -273,6 +341,7 @@
             }
 
             renderContent();
+            applySiteIVS();
         }
 
         // 負責把陣列裡的注音轉換成漂亮直立排版的 HTML
@@ -348,25 +417,25 @@
 
                 phrasesData.forEach(item => {
                     const card = document.createElement('div');
-                    card.className = 'card-3d bg-white rounded-[2rem] p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between cursor-pointer border-4 border-white';
+                    card.className = 'card-3d bg-white rounded-[1.5rem] p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between cursor-pointer border-4 border-white';
                     
                     // 將中文字陣列還原成要唸出來的純文字 (例如: "謝謝")
                     const plainChineseText = item.chinese.map(c => c.char).join('');
                     
-                    // 呼叫我們自製的可愛注音產生器
-                    const phoneticHTML = generatePhoneticHTML(item.chinese);
+                    // 使用注音芫荽 IVS 顯示國字；多音字由 IVS 選擇正確讀音。
+                    const ivsChineseText = toSiteIVS(plainChineseText);
 
                     card.innerHTML = `
-                        <div class="flex items-center gap-4 sm:gap-6 mb-4 sm:mb-0 w-full">
-                            <div class="text-4xl sm:text-5xl bg-purple-50 p-4 rounded-3xl shrink-0">${item.emoji}</div>
+                        <div class="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-0 w-full">
+                            <div class="text-3xl sm:text-4xl bg-purple-50 p-2.5 rounded-2xl shrink-0">${item.emoji}</div>
                             <div class="text-center sm:text-left flex-1">
                                 <div class="mb-3 flex flex-wrap justify-center sm:justify-start items-center">
-                                    ${phoneticHTML}
+                                    <span class="font-zhuyin text-3xl sm:text-4xl font-black text-gray-700 tracking-wide">${ivsChineseText}</span>
                                 </div>
-                                <div class="text-lg sm:text-xl text-gray-500 font-bold font-sans mt-1 bg-gray-100 inline-block px-4 py-1 rounded-full">${item.vn}</div>
+                                <div class="text-sm sm:text-base text-gray-500 font-bold font-sans mt-1 bg-gray-100 inline-block px-3 py-0.5 rounded-full">${item.vn}</div>
                             </div>
                         </div>
-                        <button class="w-14 h-14 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-2xl shrink-0 border-4 border-white shadow-sm">
+                        <button class="w-12 h-12 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xl shrink-0 border-4 border-white shadow-sm">
                             🔊
                         </button>
                     `;
@@ -381,10 +450,135 @@
                 });
                 mainContent.appendChild(grid);
             }
+            // 渲染：數學小教室
+            else if (currentMode === 'math') {
+                renderMathClassroom(mainContent);
+            }
+            // 渲染：注音歌（直接內嵌，不再開新分頁）
+            else if (currentMode === 'song') {
+                renderBopomofoSong(mainContent);
+            }
             // 渲染：遊戲區
             else if (currentMode === 'game') {
                 initGame(mainContent);
             }
+        }
+
+        function renderBopomofoSong(container) {
+            container.innerHTML = `
+                <section class="max-w-4xl mx-auto bg-white rounded-[2.5rem] p-4 sm:p-6 border-4 border-white shadow-[0_12px_0_0_#f3f4f6]">
+                    <div class="text-center mb-4">
+                        <h3 class="text-3xl sm:text-4xl font-black text-pink-600 mb-2">🎵 注音歌</h3>
+                        <p class="text-gray-500 font-bold">直接在網站裡觀看，不需要跳到其他影片。</p>
+                    </div>
+                    <div class="relative w-full overflow-hidden rounded-[1.75rem] bg-black aspect-video">
+                        <iframe
+                            id="bopomofo-youtube"
+                            class="absolute inset-0 w-full h-full"
+                            title="注音歌"
+                            loading="lazy"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerpolicy="origin-when-cross-origin"
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                    <p id="youtube-debug" class="text-center text-sm text-gray-400 mt-4 font-bold">影片由 YouTube 播放器內嵌於本頁。</p>
+                    <div id="youtube-local-warning" class="hidden mt-4 bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4 text-sm sm:text-base text-yellow-800 font-bold text-center">
+                        如果你是直接用電腦開啟 HTML 檔案（file://），YouTube 可能因為沒有 HTTP Referer 而顯示錯誤 153。把網頁放到網站空間後，內嵌播放器才能正常取得網站來源資訊。
+                    </div>
+                </section>`;
+            setupYouTubeEmbed();
+        }
+
+        function setupYouTubeEmbed() {
+            const iframe = document.getElementById('bopomofo-youtube');
+            const warning = document.getElementById('youtube-local-warning');
+            if (!iframe) return;
+
+            const params = new URLSearchParams({
+                rel: '0',
+                playsinline: '1',
+                enablejsapi: '1',
+                origin: window.location.origin === 'null' ? '' : window.location.origin
+            });
+
+            // file:// 沒有可提供給 YouTube 的 HTTP Referer；這是 YouTube 錯誤 153 的常見原因。
+            if (window.location.protocol === 'file:') {
+                warning?.classList.remove('hidden');
+                params.delete('origin');
+            }
+
+            iframe.src = 'https://www.youtube-nocookie.com/embed/S-H3WJNbf0A?' + params.toString();
+        }
+
+        function renderMathClassroom(container) {
+            container.innerHTML = '';
+            mathData.forEach(group => {
+                const section = document.createElement('section');
+                section.className = 'mb-7';
+                section.innerHTML = `<h3 class="text-xl sm:text-2xl font-black text-gray-700 mb-3 text-center">${group.category}</h3>`;
+                const grid = document.createElement('div');
+                grid.className = 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 sm:gap-4';
+                group.items.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'card-3d math-card bg-white rounded-[1.5rem] p-3 sm:p-4 flex flex-col items-center justify-center cursor-pointer border-4 border-white text-center';
+                    card.innerHTML = `
+                        <div class="math-word font-black text-green-600 mb-2">${item.chinese}</div>
+                        <div class="text-sm sm:text-base text-gray-500 font-bold bg-gray-100 px-2.5 py-1 rounded-full">${item.vn}</div>
+                        <div class="mt-2 text-xl">🔊</div>`;
+                    card.onclick = () => {
+                        card.classList.add('bg-green-50');
+                        setTimeout(() => card.classList.remove('bg-green-50'), 200);
+                        playSound(item.chinese);
+                    };
+                    grid.appendChild(card);
+                });
+                section.appendChild(grid);
+                container.appendChild(section);
+            });
+
+            const game = document.createElement('div');
+            game.className = 'max-w-3xl mx-auto bg-white rounded-[2.5rem] p-6 sm:p-8 border-4 border-white shadow-[0_12px_0_0_#f3f4f6] text-center';
+            game.innerHTML = `
+                <h3 class="text-3xl font-black text-gray-700 mb-3">🎧 數學語詞聽力挑戰</h3>
+                <p class="text-gray-500 text-lg mb-7 font-bold">聽一聽，選出正確的數學語詞！</p>
+                <button id="math-play-btn" class="pulse-animation mx-auto w-28 h-28 bg-yellow-300 rounded-full flex items-center justify-center text-5xl border-4 border-white shadow-[0_8px_0_0_#fde047] mb-8">🔊</button>
+                <div id="math-options" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
+                <div id="math-feedback" class="mt-7 text-2xl font-black h-10"></div>`;
+            container.appendChild(game);
+            startMathRound();
+        }
+
+        function startMathRound() {
+            const btn = document.getElementById('math-play-btn');
+            const options = document.getElementById('math-options');
+            const feedback = document.getElementById('math-feedback');
+            if (!btn || !options) return;
+            options.innerHTML = '';
+            feedback.innerHTML = '';
+            const choices = [...allMathWords].sort(() => Math.random() - 0.5).slice(0, 3);
+            const target = choices[Math.floor(Math.random() * choices.length)];
+            btn.onclick = () => playSound(target.chinese);
+            choices.forEach(item => {
+                const choice = document.createElement('button');
+                choice.className = 'btn-3d bg-green-50 hover:bg-green-100 border-4 border-green-100 rounded-[1.5rem] p-5 text-2xl sm:text-3xl font-black';
+                choice.innerText = item.chinese;
+                choice.onclick = () => {
+                    if (item.chinese === target.chinese) {
+                        choice.classList.replace('bg-green-50', 'bg-green-400');
+                        choice.classList.add('text-white');
+                        feedback.innerHTML = '<span class="text-green-500 bg-green-100 px-5 py-2 rounded-full">✨ 正確！Đúng rồi! ✨</span>';
+                        playSound('答對了');
+                        setTimeout(startMathRound, 1300);
+                    } else {
+                        choice.classList.add('shake', 'bg-red-100');
+                        feedback.innerHTML = '<span class="text-red-500 bg-red-100 px-5 py-2 rounded-full">❌ 再試一次！Thử lại nhé!</span>';
+                        playSound('不對喔');
+                        setTimeout(() => choice.classList.remove('shake'), 500);
+                    }
+                };
+                options.appendChild(choice);
+            });
         }
 
         function initGame(container) {
@@ -454,7 +648,26 @@
             });
         }
 
+        // 注音芫荽 IVS：第一讀音使用字型預設字形；需要指定其他讀音時加入 Variation Selector。
+        function toSiteIVS(text) {
+            // 「謝謝」的第二個「謝」在本站教學中是輕聲，指定為第二讀音。
+            return text.replaceAll('謝謝', '謝\u{E01E0}謝\u{E01E1}');
+        }
+
+        function applySiteIVS() {
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+            const nodes = [];
+            while (walker.nextNode()) nodes.push(walker.currentNode);
+            nodes.forEach(node => {
+                const parent = node.parentElement;
+                if (!parent || parent.closest('script, style, textarea, iframe')) return;
+                const converted = toSiteIVS(node.nodeValue);
+                if (converted !== node.nodeValue) node.nodeValue = converted;
+            });
+        }
+
         window.onload = () => {
+            applySiteIVS();
             switchMode('consonants');
         };
     </script>
