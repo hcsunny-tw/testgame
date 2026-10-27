@@ -21,7 +21,6 @@
             font-family: 'Bpmf Iansui', sans-serif !important;
         }
 
-        /* 全站中文與介面文字統一使用注音芫荽 IVS 字型。IVS 會依文字中的變體選擇子顯示對應讀音。 */
         body, body * {
             font-family: 'Bpmf Iansui', sans-serif !important;
         }
@@ -52,7 +51,6 @@
             box-shadow: 0 0 0 0 #f3f4f6;
         }
         
-        /* 數學字卡：縮小尺寸，讓一個畫面可以看到更多內容 */
         .math-card {
             min-height: 150px;
         }
@@ -77,7 +75,6 @@
             50% { transform: scale(1.05); }
         }
 
-        /* 答錯時的搖晃動畫 */
         .shake {
             animation: shake-animation 0.4s;
         }
@@ -88,6 +85,43 @@
             50% { transform: translateX(8px); }
             75% { transform: translateX(-8px); }
         }
+
+        /* 答對彩帶特效 */
+        .confetti-piece {
+            position: fixed;
+            top: -18px;
+            width: 10px;
+            height: 16px;
+            pointer-events: none;
+            z-index: 9999;
+            animation: confetti-fall 1.2s ease-out forwards;
+        }
+
+        @keyframes confetti-fall {
+            0% { transform: translate3d(0, -10px, 0) rotate(0deg); opacity: 1; }
+            100% { transform: translate3d(var(--drift), 105vh, 0) rotate(var(--spin)); opacity: 0; }
+        }
+
+        /* 最新按鈕與鎖定樣式 */
+        .challenge-main-btn {
+            display:block; margin:8px auto 22px; padding:14px 24px; border:0; border-radius:999px;
+            background:#fde68a; box-shadow:0 6px 0 #facc15; font-size:1.08rem; font-weight:900; cursor:pointer;
+        }
+        .challenge-main-btn:active {
+            transform:translateY(4px); box-shadow:0 2px 0 #facc15;
+        }
+        .adventure-lock-button {
+            margin-top:10px; border:0; border-radius:999px; padding:11px 18px;
+            background:#eef1f5; color:#667085; font-weight:900; cursor:not-allowed;
+        }
+        .adventure-locked-note {
+            max-width:720px; margin:0 auto; padding:16px 18px; border-radius:18px;
+            background:#f8fafc; border:2px dashed #d8dee8; text-align:center; color:#667085;
+            display:flex; flex-direction:column; align-items:center; gap:4px;
+        }
+        .adventure-locked-note span { font-size:1.6rem; }
+        .adventure-locked-note b { font-size:1rem; }
+        .adventure-locked-note small { opacity:.8; }
     </style>
 </head>
 <body class="min-h-screen text-gray-800 p-4 sm:p-8 font-sans">
@@ -103,8 +137,8 @@
             </h2>
         </header>
 
-        <!-- 模式切換按鈕 (手機版 2x2, 電腦版 一排4個) -->
-        <nav class="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 mb-10 font-sans">
+        <!-- 模式切換按鈕 -->
+        <nav class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mb-10 font-sans">
             <button onclick="switchMode('consonants')" id="btn-consonants" class="nav-btn btn-3d bg-blue-100 text-blue-700 py-4 sm:py-5 rounded-[2rem] text-xl font-black border-4 border-white">
                 聲母 (Phụ âm)
             </button>
@@ -115,10 +149,17 @@
                 生活用語
             </button>
             <button onclick="switchMode('game')" id="btn-game" class="nav-btn btn-3d bg-yellow-300 text-yellow-800 py-4 sm:py-5 rounded-[2rem] text-xl font-black border-4 border-white flex items-center justify-center gap-2">
-                🎮 聽力挑戰
+                🎮 聽音選擇
             </button>
             <button onclick="switchMode('math')" id="btn-math" class="nav-btn btn-3d bg-green-100 text-green-700 py-4 sm:py-5 rounded-[2rem] text-xl font-black border-4 border-white flex items-center justify-center gap-2">
                 📚 數學小教室
+            </button>
+            <!-- 修復後的新按鈕：統一按鈕風格 -->
+            <button onclick="switchMode('math-listening')" id="btn-math-listening" class="nav-btn btn-3d bg-orange-100 text-orange-700 py-4 sm:py-5 rounded-[2rem] text-xl font-black border-4 border-white flex items-center justify-center gap-2">
+                🎧 數字聽力
+            </button>
+            <button onclick="switchMode('math-adventure')" id="btn-math-adventure" class="nav-btn btn-3d bg-teal-100 text-teal-700 py-4 sm:py-5 rounded-[2rem] text-xl font-black border-4 border-white flex items-center justify-center gap-2">
+                🏝️ 語詞冒險
             </button>
         </nav>
 
@@ -134,7 +175,7 @@
     </div>
 
     <script>
-        // 數學語詞資料庫：提供中文、注音與越南文，適合國小一、二年級學生
+        // 數學語詞資料庫
         const mathData = [
             { category: '🔢 數字', items: [
                 { chinese: '一', zhuyin: ['ㄧ'], tone: 'ˊ', vn: 'một' },
@@ -172,7 +213,6 @@
             ]}
         ];
 
-        // 注音資料庫 (移除發音尾音的ㄜ、ㄛ，只保留最乾淨的發音)
         const zhuyinData = {
             consonants: [
                 { symbol: 'ㄉ', vn: 'd (đ)', type: 'consonant' },
@@ -195,142 +235,100 @@
             ]
         };
 
-        // 完全手動控制聲調與注音，再也不會錯亂！
         const phrasesData = [
-            { 
-                chinese: [
-                    { char: '你', zhuyin: ['ㄋ', 'ㄧ'], tone: 'ˇ' },
-                    { char: '好', zhuyin: ['ㄏ', 'ㄠ'], tone: 'ˇ' }
-                ], 
-                vn: 'Xin chào', emoji: '👋' 
-            },
-            { 
-                chinese: [
-                    { char: '謝', zhuyin: ['ㄒ', 'ㄧ', 'ㄝ'], tone: 'ˋ' },
-                    // 第二個字特別設定為輕聲 (˙)，會自動放在注音正上方
-                    { char: '謝', zhuyin: ['ㄒ', 'ㄧ', 'ㄝ'], tone: '˙' }
-                ], 
-                vn: 'Cảm ơn', emoji: '🙏' 
-            },
-            { 
-                chinese: [
-                    { char: '對', zhuyin: ['ㄉ', 'ㄨ', 'ㄟ'], tone: 'ˋ' },
-                    { char: '不', zhuyin: ['ㄅ', 'ㄨ'], tone: 'ˋ' },
-                    { char: '起', zhuyin: ['ㄑ', 'ㄧ'], tone: 'ˇ' }
-                ], 
-                vn: 'Xin lỗi', emoji: '🙇' 
-            },
-            { 
-                chinese: [
-                    { char: '再', zhuyin: ['ㄗ', 'ㄞ'], tone: 'ˋ' },
-                    { char: '見', zhuyin: ['ㄐ', 'ㄧ', 'ㄢ'], tone: 'ˋ' }
-                ], 
-                vn: 'Tạm biệt', emoji: '👋' 
-            },
-            { 
-                chinese: [
-                    { char: '老', zhuyin: ['ㄌ', 'ㄠ'], tone: 'ˇ' },
-                    { char: '師', zhuyin: ['ㄕ'], tone: '' },
-                    { char: '好', zhuyin: ['ㄏ', 'ㄠ'], tone: 'ˇ' }
-                ], 
-                vn: 'Em chào cô/thầy', emoji: '👩‍🏫' 
-            },
-            { 
-                chinese: [
-                    { char: '聯', zhuyin: ['ㄌ', 'ㄧ', 'ㄢ'], tone: 'ˊ' },
-                    { char: '絡', zhuyin: ['ㄌ', 'ㄨ', 'ㄛ'], tone: 'ˋ' },
-                    { char: '簿', zhuyin: ['ㄅ', 'ㄨ'], tone: 'ˋ' }
-                ], 
-                vn: 'Sổ liên lạc', emoji: '📒' 
-            },
-            { 
-                chinese: [
-                    { char: '好', zhuyin: ['ㄏ', 'ㄠ'], tone: 'ˇ' },
-                    { char: '朋', zhuyin: ['ㄆ', 'ㄥ'], tone: 'ˊ' },
-                    { char: '友', zhuyin: ['ㄧ', 'ㄡ'], tone: 'ˇ' }
-                ], 
-                vn: 'Bạn tốt', emoji: '🤝' 
-            },
-            { 
-                chinese: [
-                    { char: '好', zhuyin: ['ㄏ', 'ㄠ'], tone: 'ˇ' }
-                ], 
-                vn: 'Tốt / Được', emoji: '👍' 
-            },
-            { 
-                // 新增的「不」字卡
-                chinese: [
-                    { char: '不', zhuyin: ['ㄅ', 'ㄨ'], tone: 'ˋ' }
-                ], 
-                vn: 'Không', emoji: '🙅' 
-            },
-            { 
-                chinese: [
-                    { char: '上', zhuyin: ['ㄕ', 'ㄤ'], tone: 'ˋ' },
-                    { char: '廁', zhuyin: ['ㄘ', 'ㄜ'], tone: 'ˋ' },
-                    { char: '所', zhuyin: ['ㄙ', 'ㄨ', 'ㄛ'], tone: 'ˇ' }
-                ], 
-                vn: 'Đi vệ sinh', emoji: '🚽' 
-            },
-            { 
-                chinese: [
-                    { char: '喝', zhuyin: ['ㄏ', 'ㄜ'], tone: '' },
-                    { char: '水', zhuyin: ['ㄕ', 'ㄨ', 'ㄟ'], tone: 'ˇ' }
-                ], 
-                vn: 'Uống nước', emoji: '💧' 
-            },
-            { 
-                chinese: [
-                    { char: '早', zhuyin: ['ㄗ', 'ㄠ'], tone: 'ˇ' },
-                    { char: '安', zhuyin: ['ㄢ'], tone: '' }
-                ], 
-                vn: 'Chào buổi sáng', emoji: '🌅' 
-            },
-            { 
-                chinese: [
-                    { char: '午', zhuyin: ['ㄨ'], tone: 'ˇ' },
-                    { char: '安', zhuyin: ['ㄢ'], tone: '' }
-                ], 
-                vn: 'Chào buổi trưa', emoji: '☀️' 
-            },
-            { 
-                chinese: [
-                    { char: '晚', zhuyin: ['ㄨ', 'ㄢ'], tone: 'ˇ' },
-                    { char: '安', zhuyin: ['ㄢ'], tone: '' }
-                ], 
-                vn: 'Chúc ngủ ngon', emoji: '🌙' 
-            },
-            { 
-                chinese: [
-                    { char: '聽', zhuyin: ['ㄊ', 'ㄧ', 'ㄥ'], tone: '' },
-                    { char: '不', zhuyin: ['ㄅ', 'ㄨ'], tone: 'ˋ' },
-                    { char: '懂', zhuyin: ['ㄉ', 'ㄨ', 'ㄥ'], tone: 'ˇ' }
-                ], 
-                vn: 'Không hiểu', emoji: '❓' 
-            }
+            { chinese: [{ char: '你', zhuyin: ['ㄋ', 'ㄧ'], tone: 'ˇ' }, { char: '好', zhuyin: ['ㄏ', 'ㄠ'], tone: 'ˇ' }], vn: 'Xin chào', emoji: '👋' },
+            { chinese: [{ char: '謝', zhuyin: ['ㄒ', 'ㄧ', 'ㄝ'], tone: 'ˋ' }, { char: '謝', zhuyin: ['ㄒ', 'ㄧ', 'ㄝ'], tone: '˙' }], vn: 'Cảm ơn', emoji: '🙏' },
+            { chinese: [{ char: '對', zhuyin: ['ㄉ', 'ㄨ', 'ㄟ'], tone: 'ˋ' }, { char: '不', zhuyin: ['ㄅ', 'ㄨ'], tone: 'ˋ' }, { char: '起', zhuyin: ['ㄑ', 'ㄧ'], tone: 'ˇ' }], vn: 'Xin lỗi', emoji: '🙇' },
+            { chinese: [{ char: '再', zhuyin: ['ㄗ', 'ㄞ'], tone: 'ˋ' }, { char: '見', zhuyin: ['ㄐ', 'ㄧ', 'ㄢ'], tone: 'ˋ' }], vn: 'Tạm biệt', emoji: '👋' },
+            { chinese: [{ char: '老', zhuyin: ['ㄌ', 'ㄠ'], tone: 'ˇ' }, { char: '師', zhuyin: ['ㄕ'], tone: '' }, { char: '好', zhuyin: ['ㄏ', 'ㄠ'], tone: 'ˇ' }], vn: 'Em chào cô/thầy', emoji: '👩‍🏫' },
+            { chinese: [{ char: '聯', zhuyin: ['ㄌ', 'ㄧ', 'ㄢ'], tone: 'ˊ' }, { char: '絡', zhuyin: ['ㄌ', 'ㄨ', 'ㄛ'], tone: 'ˋ' }, { char: '簿', zhuyin: ['ㄅ', 'ㄨ'], tone: 'ˋ' }], vn: 'Sổ liên lạc', emoji: '📒' },
+            { chinese: [{ char: '好', zhuyin: ['ㄏ', 'ㄠ'], tone: 'ˇ' }, { char: '朋', zhuyin: ['ㄆ', 'ㄥ'], tone: 'ˊ' }, { char: '友', zhuyin: ['ㄧ', 'ㄡ'], tone: 'ˇ' }], vn: 'Bạn tốt', emoji: '🤝' },
+            { chinese: [{ char: '好', zhuyin: ['ㄏ', 'ㄠ'], tone: 'ˇ' }], vn: 'Tốt / Được', emoji: '👍' },
+            { chinese: [{ char: '不', zhuyin: ['ㄅ', 'ㄨ'], tone: 'ˋ' }], vn: 'Không', emoji: '🙅' },
+            { chinese: [{ char: '上', zhuyin: ['ㄕ', 'ㄤ'], tone: 'ˋ' }, { char: '廁', zhuyin: ['ㄘ', 'ㄜ'], tone: 'ˋ' }, { char: '所', zhuyin: ['ㄙ', 'ㄨ', 'ㄛ'], tone: 'ˇ' }], vn: 'Đi vệ sinh', emoji: '🚽' },
+            { chinese: [{ char: '喝', zhuyin: ['ㄏ', 'ㄜ'], tone: '' }, { char: '水', zhuyin: ['ㄕ', 'ㄨ', 'ㄟ'], tone: 'ˇ' }], vn: 'Uống nước', emoji: '💧' },
+            { chinese: [{ char: '早', zhuyin: ['ㄗ', 'ㄠ'], tone: 'ˇ' }, { char: '安', zhuyin: ['ㄢ'], tone: '' }], vn: 'Chào buổi sáng', emoji: '🌅' },
+            { chinese: [{ char: '午', zhuyin: ['ㄨ'], tone: 'ˇ' }, { char: '安', zhuyin: ['ㄢ'], tone: '' }], vn: 'Chào buổi trưa', emoji: '☀️' },
+            { chinese: [{ char: '晚', zhuyin: ['ㄨ', 'ㄢ'], tone: 'ˇ' }, { char: '安', zhuyin: ['ㄢ'], tone: '' }], vn: 'Chúc ngủ ngon', emoji: '🌙' },
+            { chinese: [{ char: '聽', zhuyin: ['ㄊ', 'ㄧ', 'ㄥ'], tone: '' }, { char: '不', zhuyin: ['ㄅ', 'ㄨ'], tone: 'ˋ' }, { char: '懂', zhuyin: ['ㄉ', 'ㄨ', 'ㄥ'], tone: 'ˇ' }], vn: 'Không hiểu', emoji: '❓' }
         ];
 
         let currentMode = 'consonants';
         const allSymbols = [...zhuyinData.consonants];
         const allMathWords = mathData.flatMap(group => group.items);
+        const mathChallengeWords = ['一','二','三','十','二十','個位','十位','百位','加','減','等於','長','短','厚','薄','曲線','直線'];
+        
+        let listeningStarted = false;
+        let listeningIndex = 0;
+        let listeningTarget = '';
+        let listeningScore = 0;
 
-        // 個別處理多音字：『薄』在本網站的數學語詞中要教 ㄅㄛˊ，
-        // 語音合成改用同音字『博』協助瀏覽器穩定念出正確讀音。
         const speechTextMap = { '薄': '博' };
+        let zhVoices = [];
+
+        function loadVoices() {
+            if (!('speechSynthesis' in window)) return;
+            zhVoices = window.speechSynthesis.getVoices().filter(v => /^zh(-|_|$)/i.test(v.lang));
+        }
+        loadVoices();
+        if ('speechSynthesis' in window && 'onvoiceschanged' in window.speechSynthesis) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+
+        function chooseChineseVoice() {
+            if (!zhVoices.length) loadVoices();
+            const preferred = [
+                /Microsoft.*Yunxi/i, /Microsoft.*Xiaoxiao/i, /Microsoft.*Yunjian/i,
+                /Microsoft.*HsiaoChen/i, /Microsoft.*HsiaoYu/i, /Microsoft.*Yating/i,
+                /Google.*繁體中文/i, /Google.*Taiwan/i, /Sinji/i
+            ];
+            for (const pattern of preferred) {
+                const found = zhVoices.find(v => pattern.test(v.name) && /zh-TW|zh-Hant|zh-HK/i.test(v.lang));
+                if (found) return found;
+            }
+            return zhVoices.find(v => /zh-TW|zh-Hant/i.test(v.lang)) || zhVoices[0] || null;
+        }
 
         function playSound(text) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(speechTextMap[text] || text);
                 utterance.lang = 'zh-TW';
+                const voice = chooseChineseVoice();
+                if (voice) utterance.voice = voice;
+                utterance.rate = 0.9;
+                utterance.pitch = 1.05;
+                utterance.volume = 1;
                 window.speechSynthesis.speak(utterance);
             }
+        }
+
+        function showConfetti() {
+            const pieces = 42;
+            for (let i = 0; i < pieces; i++) {
+                const el = document.createElement('span');
+                el.className = 'confetti-piece';
+                el.style.left = `${Math.random() * 100}vw`;
+                el.style.setProperty('--drift', `${(Math.random() - 0.5) * 220}px`);
+                el.style.setProperty('--spin', `${Math.random() * 720 - 360}deg`);
+                el.style.animationDelay = `${Math.random() * 180}ms`;
+                el.style.width = `${7 + Math.random() * 7}px`;
+                el.style.height = `${10 + Math.random() * 10}px`;
+                el.style.background = ['#f43f5e','#f59e0b','#22c55e','#3b82f6','#a855f7'][Math.floor(Math.random()*5)];
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 1600);
+            }
+        }
+
+        function celebrateCorrect() {
+            showConfetti();
+            playSound('正確');
         }
 
         function switchMode(mode) {
             currentMode = mode;
             
-            // 更新按鈕樣式，加入超可愛的 3D 壓下效果
+            // 更新按鈕樣式
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('shadow-[0_0_0_0_rgba(0,0,0,0.1)]', 'translate-y-[6px]');
             });
@@ -344,124 +342,228 @@
             applySiteIVS();
         }
 
-        // 負責把陣列裡的注音轉換成漂亮直立排版的 HTML
-        function generatePhoneticHTML(wordData) {
-            return wordData.map(item => {
-                let toneMarker = '';
-                let neutralMarker = '';
-                
-                if (item.tone === '˙') {
-                    // 輕聲：放在第一顆注音的絕對上方居中
-                    neutralMarker = `<span class="absolute -top-4 left-1/2 transform -translate-x-1/2 text-lg font-black text-pink-500">˙</span>`;
-                } else if (item.tone) {
-                    // 其他聲調：放在注音組的右側偏上
-                    toneMarker = `<span class="absolute top-[25%] -right-3.5 text-base font-black text-pink-500">${item.tone}</span>`;
-                }
+        function toSiteIVS(text) {
+            return text.replaceAll('謝謝', '謝\u{E01E0}謝\u{E01E1}');
+        }
 
-                // 將注音符號疊起來
-                const symbols = item.zhuyin.map(z => `<span class="block leading-[1.1]">${z}</span>`).join('');
-
-                // 外面包一個可愛的虛線小方框，像國小作業簿
-                return `
-                <div class="inline-flex items-center mx-1 sm:mx-1.5 my-1 bg-yellow-50/50 px-2 py-1.5 rounded-[1rem] border-2 border-dashed border-yellow-300">
-                    <span class="text-4xl sm:text-5xl font-black text-gray-700 font-sans tracking-wide mr-1">${item.char}</span>
-                    <div class="relative flex flex-col items-center justify-center ml-0.5 text-lg sm:text-xl font-bold text-indigo-600 font-sans min-w-[18px]">
-                        ${neutralMarker}
-                        ${symbols}
-                        ${toneMarker}
-                    </div>
-                </div>
-                `;
-            }).join('');
+        function applySiteIVS() {
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+            const nodes = [];
+            while (walker.nextNode()) nodes.push(walker.currentNode);
+            nodes.forEach(node => {
+                const parent = node.parentElement;
+                if (!parent || parent.closest('script, style, textarea, iframe')) return;
+                const converted = toSiteIVS(node.nodeValue);
+                if (converted !== node.nodeValue) node.nodeValue = converted;
+            });
         }
 
         function renderContent() {
             const mainContent = document.getElementById('main-content');
             mainContent.innerHTML = ''; // 清空
 
-            // 渲染：聲母 (字母區)
             if (currentMode === 'consonants') {
-                const data = zhuyinData[currentMode];
-                
-                const grid = document.createElement('div');
-                grid.className = 'grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4 sm:gap-6 pb-6';
-
-                data.forEach(item => {
-                    const card = document.createElement('div');
-                    // 升級成超 Q 的 3D 卡片
-                    card.className = 'card-3d bg-white rounded-[2rem] p-6 sm:p-8 flex flex-col items-center justify-center cursor-pointer border-4 border-white';
-                    
-                    const textColor = item.type === 'consonant' ? 'text-blue-500' : 'text-green-500';
-                    const bgColor = item.type === 'consonant' ? 'bg-blue-50' : 'bg-green-50';
-                    
-                    // 這裡特別套用 font-zhuyin (芫荽注音體)
-                    card.innerHTML = `
-                        <div class="font-zhuyin text-5xl sm:text-6xl mb-4 ${textColor}">${item.symbol}</div>
-                        <div class="text-lg sm:text-xl text-gray-500 font-bold font-sans bg-gray-100 px-5 py-1.5 rounded-full">${item.vn}</div>
-                    `;
-                    
-                    card.onclick = () => {
-                        card.classList.add(bgColor);
-                        setTimeout(() => card.classList.remove(bgColor), 200);
-                        playSound(item.symbol);
-                    };
-                    
-                    grid.appendChild(card);
-                });
-                mainContent.appendChild(grid);
+                renderConsonants(mainContent);
             } 
-            // 渲染：生活用語區 (手工注音版)
             else if (currentMode === 'phrases') {
-                const grid = document.createElement('div');
-                grid.className = 'grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 pb-6';
-
-                phrasesData.forEach(item => {
-                    const card = document.createElement('div');
-                    card.className = 'card-3d bg-white rounded-[1.5rem] p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between cursor-pointer border-4 border-white';
-                    
-                    // 將中文字陣列還原成要唸出來的純文字 (例如: "謝謝")
-                    const plainChineseText = item.chinese.map(c => c.char).join('');
-                    
-                    // 使用注音芫荽 IVS 顯示國字；多音字由 IVS 選擇正確讀音。
-                    const ivsChineseText = toSiteIVS(plainChineseText);
-
-                    card.innerHTML = `
-                        <div class="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-0 w-full">
-                            <div class="text-3xl sm:text-4xl bg-purple-50 p-2.5 rounded-2xl shrink-0">${item.emoji}</div>
-                            <div class="text-center sm:text-left flex-1">
-                                <div class="mb-3 flex flex-wrap justify-center sm:justify-start items-center">
-                                    <span class="font-zhuyin text-3xl sm:text-4xl font-black text-gray-700 tracking-wide">${ivsChineseText}</span>
-                                </div>
-                                <div class="text-sm sm:text-base text-gray-500 font-bold font-sans mt-1 bg-gray-100 inline-block px-3 py-0.5 rounded-full">${item.vn}</div>
-                            </div>
-                        </div>
-                        <button class="w-12 h-12 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xl shrink-0 border-4 border-white shadow-sm">
-                            🔊
-                        </button>
-                    `;
-                    
-                    card.onclick = () => {
-                        card.classList.add('bg-purple-50');
-                        setTimeout(() => card.classList.remove('bg-purple-50'), 200);
-                        playSound(plainChineseText);
-                    };
-                    
-                    grid.appendChild(card);
-                });
-                mainContent.appendChild(grid);
+                renderPhrases(mainContent);
             }
-            // 渲染：數學小教室
             else if (currentMode === 'math') {
                 renderMathClassroom(mainContent);
             }
-            // 渲染：注音歌（直接內嵌，不再開新分頁）
             else if (currentMode === 'song') {
                 renderBopomofoSong(mainContent);
             }
-            // 渲染：遊戲區
             else if (currentMode === 'game') {
                 initGame(mainContent);
             }
+            else if (currentMode === 'math-listening') {
+                renderMathListening(mainContent);
+            }
+            else if (currentMode === 'math-adventure') {
+                renderMathAdventure(mainContent);
+            }
+        }
+
+        function renderConsonants(container) {
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4 sm:gap-6 pb-6';
+            zhuyinData.consonants.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card-3d bg-white rounded-[2rem] p-6 sm:p-8 flex flex-col items-center justify-center cursor-pointer border-4 border-white';
+                const textColor = item.type === 'consonant' ? 'text-blue-500' : 'text-green-500';
+                const bgColor = item.type === 'consonant' ? 'bg-blue-50' : 'bg-green-50';
+                card.innerHTML = `
+                    <div class="font-zhuyin text-5xl sm:text-6xl mb-4 ${textColor}">${item.symbol}</div>
+                    <div class="text-lg sm:text-xl text-gray-500 font-bold font-sans bg-gray-100 px-5 py-1.5 rounded-full">${item.vn}</div>
+                `;
+                card.onclick = () => {
+                    card.classList.add(bgColor);
+                    setTimeout(() => card.classList.remove(bgColor), 200);
+                    playSound(item.symbol);
+                };
+                grid.appendChild(card);
+            });
+            container.appendChild(grid);
+        }
+
+        function renderPhrases(container) {
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 pb-6';
+            phrasesData.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card-3d bg-white rounded-[1.5rem] p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between cursor-pointer border-4 border-white';
+                const plainChineseText = item.chinese.map(c => c.char).join('');
+                const ivsChineseText = toSiteIVS(plainChineseText);
+                card.innerHTML = `
+                    <div class="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-0 w-full">
+                        <div class="text-3xl sm:text-4xl bg-purple-50 p-2.5 rounded-2xl shrink-0">${item.emoji}</div>
+                        <div class="text-center sm:text-left flex-1">
+                            <div class="mb-3 flex flex-wrap justify-center sm:justify-start items-center">
+                                <span class="font-zhuyin text-3xl sm:text-4xl font-black text-gray-700 tracking-wide">${ivsChineseText}</span>
+                            </div>
+                            <div class="text-sm sm:text-base text-gray-500 font-bold font-sans mt-1 bg-gray-100 inline-block px-3 py-0.5 rounded-full">${item.vn}</div>
+                        </div>
+                    </div>
+                    <button class="w-12 h-12 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xl shrink-0 border-4 border-white shadow-sm">🔊</button>
+                `;
+                card.onclick = () => {
+                    card.classList.add('bg-purple-50');
+                    setTimeout(() => card.classList.remove('bg-purple-50'), 200);
+                    playSound(plainChineseText);
+                };
+                grid.appendChild(card);
+            });
+            container.appendChild(grid);
+        }
+
+        function renderMathClassroom(container) {
+            mathData.forEach(group => {
+                const section = document.createElement('section');
+                section.className = 'mb-7';
+                section.innerHTML = `<h3 class="text-xl sm:text-2xl font-black text-gray-700 mb-3 text-center">${group.category}</h3>`;
+                const grid = document.createElement('div');
+                grid.className = 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 sm:gap-4';
+                group.items.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'card-3d math-card bg-white rounded-[1.5rem] p-3 sm:p-4 flex flex-col items-center justify-center cursor-pointer border-4 border-white text-center';
+                    card.innerHTML = `<div class="math-word font-black text-green-600 mb-2">${item.chinese}</div><div class="text-sm sm:text-base text-gray-500 font-bold bg-gray-100 px-2.5 py-1 rounded-full">${item.vn}</div><div class="mt-2 text-xl">🔊</div>`;
+                    card.onclick = () => { card.classList.add('bg-green-50'); setTimeout(()=>card.classList.remove('bg-green-50'),200); playSound(item.chinese); };
+                    grid.appendChild(card);
+                });
+                section.appendChild(grid); 
+                container.appendChild(section);
+            });
+        }
+
+        function renderMathListening(container) {
+            container.innerHTML = `
+                <div class="max-w-3xl mx-auto bg-white rounded-[2.5rem] p-6 sm:p-8 border-4 border-white shadow-[0_12px_0_0_#f3f4f6] text-center">
+                    <div class="text-center mb-6">
+                        <div class="text-5xl mb-3">🎧</div>
+                        <h2 class="text-2xl sm:text-3xl font-black text-gray-700">數字聽力挑戰</h2>
+                        <p class="text-gray-500 font-bold mt-2">按下開始按鈕後，才會開始挑戰。</p>
+                    </div>
+                    <div id="listen-start-area">
+                        <button class="challenge-main-btn" id="listen-start-btn">🎧 開始數字聽力挑戰</button>
+                    </div>
+                    <div id="listen-game" style="display:none">
+                        <div class="flex justify-between font-black opacity-70 mb-4 px-4 text-lg">
+                            <span id="listen-round">第 1 題</span>
+                            <span id="listen-score">⭐ 0</span>
+                        </div>
+                        <button class="pulse-animation mx-auto w-28 h-28 bg-yellow-300 hover:bg-yellow-400 rounded-full flex items-center justify-center text-5xl border-4 border-white shadow-[0_8px_0_0_#fde047] active:translate-y-2 active:shadow-none transition-all mb-8" id="listen-play-btn">🔊</button>
+                        <div id="listen-choices" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
+                        <div id="listen-feedback" class="mt-7 text-2xl font-black h-10"></div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('listen-start-btn').onclick = () => {
+                listeningStarted = true; 
+                listeningIndex = 0;
+                listeningScore = 0;
+                document.getElementById('listen-start-area').style.display = 'none';
+                document.getElementById('listen-game').style.display = 'block';
+                nextListeningQuestion();
+            };
+            document.getElementById('listen-play-btn').onclick = () => playSound(listeningTarget);
+        }
+
+        function nextListeningQuestion() {
+            const round = document.getElementById('listen-round');
+            const scoreLabel = document.getElementById('listen-score');
+            const choices = document.getElementById('listen-choices');
+            const feedback = document.getElementById('listen-feedback');
+            
+            if(!round || !choices) return;
+            
+            listeningTarget = mathChallengeWords[Math.floor(Math.random() * mathChallengeWords.length)];
+            let pool = [listeningTarget];
+            while(pool.length < 3) {
+                const x = mathChallengeWords[Math.floor(Math.random() * mathChallengeWords.length)];
+                if(!pool.includes(x)) pool.push(x);
+            }
+            pool.sort(() => Math.random() - 0.5);
+            
+            round.textContent = `第 ${listeningIndex + 1} 題`;
+            scoreLabel.textContent = `⭐ ${listeningScore}`;
+            feedback.innerHTML = '';
+            
+            choices.innerHTML = pool.map(x => `
+                <button class="feature-choice btn-3d bg-gray-50 hover:bg-green-50 border-4 border-gray-100 hover:border-green-300 rounded-[1.5rem] p-5 text-2xl sm:text-3xl font-black transition-all" data-word="${x}">
+                    ${x}
+                </button>
+            `).join('');
+            
+            choices.querySelectorAll('button').forEach(btn => {
+                btn.onclick = () => {
+                    if(btn.dataset.word === listeningTarget) {
+                        btn.classList.replace('bg-gray-50', 'bg-green-400');
+                        btn.classList.replace('border-gray-100', 'border-green-400');
+                        btn.classList.add('text-white');
+                        feedback.innerHTML = '<span class="text-green-500 bg-green-100 px-5 py-2 rounded-full">✨ 正確！ ✨</span>';
+                        celebrateCorrect();
+                        listeningScore++;
+                        
+                        setTimeout(() => {
+                            listeningIndex++;
+                            if(listeningIndex >= 5) {
+                                feedback.innerHTML = '<span class="text-blue-500 bg-blue-100 px-5 py-2 rounded-full">🏆 挑戰完成！</span>';
+                                return;
+                            }
+                            nextListeningQuestion();
+                        }, 1300);
+                    } else {
+                        btn.classList.replace('bg-gray-50', 'bg-red-100');
+                        btn.classList.replace('border-gray-100', 'border-red-300');
+                        btn.classList.add('shake');
+                        feedback.innerHTML = '<span class="text-red-500 bg-red-100 px-5 py-2 rounded-full">❌ 再試一次！</span>';
+                        playSound('不對喔');
+                        setTimeout(() => btn.classList.remove('shake'), 500);
+                    }
+                };
+            });
+            
+            setTimeout(() => playSound(listeningTarget), 300);
+        }
+
+        function renderMathAdventure(container) {
+            container.innerHTML = `
+                <div class="max-w-3xl mx-auto bg-white rounded-[2.5rem] p-6 sm:p-10 border-4 border-white shadow-[0_12px_0_0_#f3f4f6] text-center">
+                    <div class="text-center mb-6">
+                        <div class="text-5xl mb-4">🏝️</div>
+                        <h2 class="text-2xl sm:text-3xl font-black text-gray-700">語詞冒險</h2>
+                        <p class="text-gray-500 font-bold mt-2">目前暫不開放，等大家熟悉數學語詞後再一起挑戰！</p>
+                    </div>
+                    <div class="adventure-locked-note mx-auto mt-6">
+                        <span>🌱</span>
+                        <b>目前先專心學習數學語詞與聽力挑戰</b>
+                        <small>冒險模式之後會開放 5 個關卡。</small>
+                    </div>
+                    <button class="adventure-lock-button mx-auto mt-8 block w-full sm:w-auto" disabled>🔒 語詞冒險尚未開放</button>
+                </div>
+            `;
         }
 
         function renderBopomofoSong(container) {
@@ -483,102 +585,16 @@
                         </iframe>
                     </div>
                     <p id="youtube-debug" class="text-center text-sm text-gray-400 mt-4 font-bold">影片由 YouTube 播放器內嵌於本頁。</p>
-                    <div id="youtube-local-warning" class="hidden mt-4 bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4 text-sm sm:text-base text-yellow-800 font-bold text-center">
-                        如果你是直接用電腦開啟 HTML 檔案（file://），YouTube 可能因為沒有 HTTP Referer 而顯示錯誤 153。把網頁放到網站空間後，內嵌播放器才能正常取得網站來源資訊。
-                    </div>
                 </section>`;
-            setupYouTubeEmbed();
-        }
-
-        function setupYouTubeEmbed() {
+            
             const iframe = document.getElementById('bopomofo-youtube');
-            const warning = document.getElementById('youtube-local-warning');
             if (!iframe) return;
-
             const params = new URLSearchParams({
-                rel: '0',
-                playsinline: '1',
-                enablejsapi: '1',
+                rel: '0', playsinline: '1', enablejsapi: '1',
                 origin: window.location.origin === 'null' ? '' : window.location.origin
             });
-
-            // file:// 沒有可提供給 YouTube 的 HTTP Referer；這是 YouTube 錯誤 153 的常見原因。
-            if (window.location.protocol === 'file:') {
-                warning?.classList.remove('hidden');
-                params.delete('origin');
-            }
-
+            if (window.location.protocol === 'file:') params.delete('origin');
             iframe.src = 'https://www.youtube-nocookie.com/embed/S-H3WJNbf0A?' + params.toString();
-        }
-
-        function renderMathClassroom(container) {
-            container.innerHTML = '';
-            mathData.forEach(group => {
-                const section = document.createElement('section');
-                section.className = 'mb-7';
-                section.innerHTML = `<h3 class="text-xl sm:text-2xl font-black text-gray-700 mb-3 text-center">${group.category}</h3>`;
-                const grid = document.createElement('div');
-                grid.className = 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 sm:gap-4';
-                group.items.forEach(item => {
-                    const card = document.createElement('div');
-                    card.className = 'card-3d math-card bg-white rounded-[1.5rem] p-3 sm:p-4 flex flex-col items-center justify-center cursor-pointer border-4 border-white text-center';
-                    card.innerHTML = `
-                        <div class="math-word font-black text-green-600 mb-2">${item.chinese}</div>
-                        <div class="text-sm sm:text-base text-gray-500 font-bold bg-gray-100 px-2.5 py-1 rounded-full">${item.vn}</div>
-                        <div class="mt-2 text-xl">🔊</div>`;
-                    card.onclick = () => {
-                        card.classList.add('bg-green-50');
-                        setTimeout(() => card.classList.remove('bg-green-50'), 200);
-                        playSound(item.chinese);
-                    };
-                    grid.appendChild(card);
-                });
-                section.appendChild(grid);
-                container.appendChild(section);
-            });
-
-            const game = document.createElement('div');
-            game.className = 'max-w-3xl mx-auto bg-white rounded-[2.5rem] p-6 sm:p-8 border-4 border-white shadow-[0_12px_0_0_#f3f4f6] text-center';
-            game.innerHTML = `
-                <h3 class="text-3xl font-black text-gray-700 mb-3">🎧 數學語詞聽力挑戰</h3>
-                <p class="text-gray-500 text-lg mb-7 font-bold">聽一聽，選出正確的數學語詞！</p>
-                <button id="math-play-btn" class="pulse-animation mx-auto w-28 h-28 bg-yellow-300 rounded-full flex items-center justify-center text-5xl border-4 border-white shadow-[0_8px_0_0_#fde047] mb-8">🔊</button>
-                <div id="math-options" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
-                <div id="math-feedback" class="mt-7 text-2xl font-black h-10"></div>`;
-            container.appendChild(game);
-            startMathRound();
-        }
-
-        function startMathRound() {
-            const btn = document.getElementById('math-play-btn');
-            const options = document.getElementById('math-options');
-            const feedback = document.getElementById('math-feedback');
-            if (!btn || !options) return;
-            options.innerHTML = '';
-            feedback.innerHTML = '';
-            const choices = [...allMathWords].sort(() => Math.random() - 0.5).slice(0, 3);
-            const target = choices[Math.floor(Math.random() * choices.length)];
-            btn.onclick = () => playSound(target.chinese);
-            choices.forEach(item => {
-                const choice = document.createElement('button');
-                choice.className = 'btn-3d bg-green-50 hover:bg-green-100 border-4 border-green-100 rounded-[1.5rem] p-5 text-2xl sm:text-3xl font-black';
-                choice.innerText = item.chinese;
-                choice.onclick = () => {
-                    if (item.chinese === target.chinese) {
-                        choice.classList.replace('bg-green-50', 'bg-green-400');
-                        choice.classList.add('text-white');
-                        feedback.innerHTML = '<span class="text-green-500 bg-green-100 px-5 py-2 rounded-full">✨ 正確！Đúng rồi! ✨</span>';
-                        playSound('答對了');
-                        setTimeout(startMathRound, 1300);
-                    } else {
-                        choice.classList.add('shake', 'bg-red-100');
-                        feedback.innerHTML = '<span class="text-red-500 bg-red-100 px-5 py-2 rounded-full">❌ 再試一次！Thử lại nhé!</span>';
-                        playSound('不對喔');
-                        setTimeout(() => choice.classList.remove('shake'), 500);
-                    }
-                };
-                options.appendChild(choice);
-            });
         }
 
         function initGame(container) {
@@ -586,19 +602,11 @@
                 <div class="max-w-3xl mx-auto bg-white rounded-[3rem] p-8 sm:p-12 border-4 border-white shadow-[0_12px_0_0_#f3f4f6] text-center">
                     <h3 class="text-3xl font-black text-gray-700 mb-3 font-sans">Nghe và Chọn (聽音選擇)</h3>
                     <p class="text-gray-500 text-lg mb-8 font-bold font-sans">Hãy nghe âm thanh và chọn chữ cái đúng</p>
-                    
-                    <button id="play-sound-btn" class="pulse-animation mx-auto w-28 h-28 sm:w-36 sm:h-36 bg-yellow-300 hover:bg-yellow-400 rounded-full flex items-center justify-center text-5xl sm:text-6xl border-4 border-white shadow-[0_8px_0_0_#fde047] active:translate-y-2 active:shadow-none transition-all mb-12">
-                        🔊
-                    </button>
-
-                    <div id="options-container" class="grid grid-cols-3 gap-4 sm:gap-8">
-                        <!-- 選項會動態產生在這裡 -->
-                    </div>
-                    
+                    <button id="play-sound-btn" class="pulse-animation mx-auto w-28 h-28 sm:w-36 sm:h-36 bg-yellow-300 hover:bg-yellow-400 rounded-full flex items-center justify-center text-5xl sm:text-6xl border-4 border-white shadow-[0_8px_0_0_#fde047] active:translate-y-2 active:shadow-none transition-all mb-12">🔊</button>
+                    <div id="options-container" class="grid grid-cols-3 gap-4 sm:gap-8"></div>
                     <div id="game-feedback" class="mt-10 text-3xl font-black h-12 flex items-center justify-center"></div>
                 </div>
             `;
-
             startNewGameRound();
         }
 
@@ -608,7 +616,6 @@
             const feedback = document.getElementById('game-feedback');
             
             if(!optionsContainer || !playSoundBtn) return;
-            
             feedback.innerHTML = ''; 
             optionsContainer.innerHTML = ''; 
 
@@ -621,7 +628,6 @@
 
             choices.forEach(item => {
                 const btn = document.createElement('button');
-                // 遊戲按鈕加上 3D 與芫荽注音體
                 btn.className = 'font-zhuyin btn-3d bg-gray-50 hover:bg-yellow-50 border-4 border-gray-100 hover:border-yellow-300 rounded-[2rem] py-8 sm:py-10 text-5xl sm:text-6xl font-bold transition-all';
                 btn.innerText = item.symbol;
                 
@@ -631,8 +637,7 @@
                         btn.classList.replace('border-gray-100', 'border-green-400');
                         btn.classList.add('text-white', 'scale-105');
                         feedback.innerHTML = '<span class="text-green-500 bg-green-100 px-6 py-2 rounded-full">✨ 正確！ (Đúng rồi!) ✨</span>';
-                        playSound('答對了');
-                        
+                        celebrateCorrect();
                         setTimeout(startNewGameRound, 1500);
                     } else {
                         btn.classList.replace('bg-gray-50', 'bg-red-100');
@@ -640,29 +645,10 @@
                         btn.classList.add('shake');
                         feedback.innerHTML = '<span class="text-red-500 bg-red-100 px-6 py-2 rounded-full">❌ 再試一次 (Thử lại nhé)</span>';
                         playSound('不對喔');
-                        
                         setTimeout(() => btn.classList.remove('shake'), 500);
                     }
                 };
                 optionsContainer.appendChild(btn);
-            });
-        }
-
-        // 注音芫荽 IVS：第一讀音使用字型預設字形；需要指定其他讀音時加入 Variation Selector。
-        function toSiteIVS(text) {
-            // 「謝謝」的第二個「謝」在本站教學中是輕聲，指定為第二讀音。
-            return text.replaceAll('謝謝', '謝\u{E01E0}謝\u{E01E1}');
-        }
-
-        function applySiteIVS() {
-            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-            const nodes = [];
-            while (walker.nextNode()) nodes.push(walker.currentNode);
-            nodes.forEach(node => {
-                const parent = node.parentElement;
-                if (!parent || parent.closest('script, style, textarea, iframe')) return;
-                const converted = toSiteIVS(node.nodeValue);
-                if (converted !== node.nodeValue) node.nodeValue = converted;
             });
         }
 
