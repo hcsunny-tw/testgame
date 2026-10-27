@@ -139,8 +139,8 @@
 
         <!-- 模式切換按鈕 -->
         <nav class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mb-10 font-sans">
-            <button onclick="switchMode('consonants')" id="btn-consonants" class="nav-btn btn-3d bg-blue-100 text-blue-700 py-4 sm:py-5 rounded-[2rem] text-xl font-black border-4 border-white">
-                聲母 (Phụ âm)
+            <button onclick="switchMode('bopomofo')" id="btn-bopomofo" class="nav-btn btn-3d bg-blue-100 text-blue-700 py-4 sm:py-5 rounded-[2rem] text-xl font-black border-4 border-white">
+                🏆 注音高手
             </button>
             <button onclick="switchMode('song')" id="btn-song" class="nav-btn btn-3d bg-pink-100 text-pink-700 py-4 sm:py-5 flex items-center justify-center rounded-[2rem] text-xl font-black border-4 border-white">
                 🎵 注音歌
@@ -213,7 +213,11 @@
         ];
 
         const zhuyinData = {
-            consonants: [
+            bopomofo: [
+                { symbol: 'ㄅ', vn: 'b', type: 'consonant' },
+                { symbol: 'ㄆ', vn: 'p', type: 'consonant' },
+                { symbol: 'ㄇ', vn: 'm', type: 'consonant' },
+                { symbol: 'ㄈ', vn: 'f (ph)', type: 'consonant' },
                 { symbol: 'ㄉ', vn: 'd (đ)', type: 'consonant' },
                 { symbol: 'ㄊ', vn: 't (th)', type: 'consonant' },
                 { symbol: 'ㄋ', vn: 'n', type: 'consonant' },
@@ -230,7 +234,23 @@
                 { symbol: 'ㄖ', vn: 'r', type: 'consonant' },
                 { symbol: 'ㄗ', vn: 'z (ch nhẹ)', type: 'consonant' },
                 { symbol: 'ㄘ', vn: 'c (x nhẹ)', type: 'consonant' },
-                { symbol: 'ㄙ', vn: 's (s nhẹ)', type: 'consonant' }
+                { symbol: 'ㄙ', vn: 's (s nhẹ)', type: 'consonant' },
+                { symbol: 'ㄧ', vn: 'i / y', type: 'medial' },
+                { symbol: 'ㄨ', vn: 'u / w', type: 'medial' },
+                { symbol: 'ㄩ', vn: 'ü / uy', type: 'medial' },
+                { symbol: 'ㄚ', vn: 'a', type: 'vowel' },
+                { symbol: 'ㄛ', vn: 'o', type: 'vowel' },
+                { symbol: 'ㄜ', vn: 'ơ', type: 'vowel' },
+                { symbol: 'ㄝ', vn: 'e', type: 'vowel' },
+                { symbol: 'ㄞ', vn: 'ai', type: 'vowel' },
+                { symbol: 'ㄟ', vn: 'ây', type: 'vowel' },
+                { symbol: 'ㄠ', vn: 'ao', type: 'vowel' },
+                { symbol: 'ㄡ', vn: 'âu', type: 'vowel' },
+                { symbol: 'ㄢ', vn: 'an', type: 'vowel' },
+                { symbol: 'ㄣ', vn: 'ân', type: 'vowel' },
+                { symbol: 'ㄤ', vn: 'ang', type: 'vowel' },
+                { symbol: 'ㄥ', vn: 'âng', type: 'vowel' },
+                { symbol: 'ㄦ', vn: 'er', type: 'vowel' }
             ]
         };
 
@@ -252,8 +272,8 @@
             { chinese: [{ char: '聽', zhuyin: ['ㄊ', 'ㄧ', 'ㄥ'], tone: '' }, { char: '不', zhuyin: ['ㄅ', 'ㄨ'], tone: 'ˋ' }, { char: '懂', zhuyin: ['ㄉ', 'ㄨ', 'ㄥ'], tone: 'ˇ' }], vn: 'Không hiểu', emoji: '❓' }
         ];
 
-        let currentMode = 'consonants';
-        const allSymbols = [...zhuyinData.consonants];
+        let currentMode = 'bopomofo';
+        const allSymbols = [...zhuyinData.bopomofo];
         const allMathWords = mathData.flatMap(group => group.items);
         const mathChallengeWords = ['一','二','三','十','二十','個位','十位','百位','加','減','等於','長','短','厚','薄','曲線','直線'];
         
@@ -368,8 +388,8 @@
             const mainContent = document.getElementById('main-content');
             mainContent.innerHTML = ''; // 清空
 
-            if (currentMode === 'consonants') {
-                renderConsonants(mainContent);
+            if (currentMode === 'bopomofo') {
+                renderBopomofo(mainContent);
             } 
             else if (currentMode === 'phrases') {
                 renderPhrases(mainContent);
@@ -391,14 +411,23 @@
             }
         }
 
-        function renderConsonants(container) {
+        function renderBopomofo(container) {
             const grid = document.createElement('div');
             grid.className = 'grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4 sm:gap-6 pb-6';
-            zhuyinData.consonants.forEach(item => {
+            zhuyinData.bopomofo.forEach(item => {
                 const card = document.createElement('div');
                 card.className = 'card-3d bg-white rounded-[2rem] p-6 sm:p-8 flex flex-col items-center justify-center cursor-pointer border-4 border-white';
-                const textColor = item.type === 'consonant' ? 'text-blue-500' : 'text-green-500';
-                const bgColor = item.type === 'consonant' ? 'bg-blue-50' : 'bg-green-50';
+                
+                let textColor = 'text-blue-500';
+                let bgColor = 'bg-blue-50';
+                if (item.type === 'medial') {
+                    textColor = 'text-orange-500';
+                    bgColor = 'bg-orange-50';
+                } else if (item.type === 'vowel') {
+                    textColor = 'text-green-500';
+                    bgColor = 'bg-green-50';
+                }
+
                 card.innerHTML = `
                     <div class="font-zhuyin text-5xl sm:text-6xl mb-4 ${textColor}">${item.symbol}</div>
                     <div class="text-lg sm:text-xl text-gray-500 font-bold font-sans bg-gray-100 px-5 py-1.5 rounded-full">${item.vn}</div>
@@ -676,7 +705,7 @@
 
         window.onload = () => {
             applySiteIVS();
-            switchMode('consonants');
+            switchMode('bopomofo');
         };
     </script>
 </body>
