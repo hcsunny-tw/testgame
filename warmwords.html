@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>暖暖話小達人</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#2e2622; --paper:#fffaf0; --kraft:#ecd9b4; --kraft2:#e3cb9c;
+    --warm:#e8735a; --warm-soft:#fde3d8; --mint:#4f9d7e; --mint-soft:#dcf1e6;
+    --sky:#4a7fb5; --sky-soft:#dde9f6; --sun:#f2b632; --sun-soft:#fdf0cc;
+    --thorn:#8a5a9e; --thorn-soft:#efe2f4; --grey:#7d7066;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100%}
+  body{
+    font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(circle at 20% 10%, rgba(255,255,255,.35) 0 2px, transparent 3px) 0 0/38px 38px,
+      radial-gradient(circle at 70% 60%, rgba(120,80,30,.08) 0 1.5px, transparent 2.5px) 0 0/27px 27px,
+      linear-gradient(160deg,var(--kraft),var(--kraft2));
+    line-height:1.6;
+    -webkit-tap-highlight-color:transparent;
+  }
+  button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:none}
+  .wrap{max-width:1100px;margin:0 auto;padding:20px 18px 40px}
+
+  /* header */
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+  .logo{display:flex;align-items:center;gap:10px;cursor:pointer}
+  .logo .icon{font-size:2.2rem}
+  .logo h1{font-size:1.7rem;font-weight:900;letter-spacing:.06em}
+  .logo small{display:block;font-size:.85rem;font-weight:700;color:var(--grey);letter-spacing:.02em}
+  .heart-box{background:var(--paper);border:3px solid var(--ink);border-radius:999px;padding:6px 16px;font-weight:900;font-size:1.15rem;box-shadow:3px 3px 0 var(--ink);display:flex;align-items:center;gap:6px}
+  .heart-box .pop{display:inline-block}
+  .heart-box .pop.bump{animation:bump .5s}
+  @keyframes bump{40%{transform:scale(1.5)}}
+
+  /* comic card */
+  .card{background:var(--paper);border:3px solid var(--ink);border-radius:18px;box-shadow:5px 5px 0 var(--ink);padding:22px}
+  .tag{display:inline-block;font-size:.85rem;font-weight:900;padding:2px 12px;border-radius:999px;border:2px solid var(--ink);background:var(--sun-soft)}
+
+  /* home */
+  .hero{text-align:center;margin-bottom:22px}
+  .hero h2{font-size:2rem;font-weight:900;margin:10px 0 6px}
+  .hero p{font-size:1.1rem}
+  .modes{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .mode{text-align:left;display:flex;flex-direction:column;gap:8px;transition:transform .15s, box-shadow .15s}
+  .mode:hover,.mode:focus-visible{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--ink)}
+  .mode:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+  .mode .big{font-size:2.6rem}
+  .mode h3{font-size:1.35rem;font-weight:900}
+  .mode p{font-size:1rem;color:#4b3f38}
+  .mode .go{margin-top:auto;font-weight:900;color:var(--warm)}
+  .m1{background:var(--warm-soft)} .m2{background:var(--sun-soft)} .m3{background:var(--sky-soft)}
+  .rules{margin-top:22px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .rule{display:flex;gap:10px;align-items:flex-start;background:var(--paper);border:2px dashed var(--ink);border-radius:14px;padding:12px 14px}
+  .rule b{font-size:1.05rem}
+  .rule .e{font-size:1.7rem;line-height:1}
+
+  /* game layout: tablet two columns */
+  .game{display:grid;grid-template-columns:1fr 1.15fr;gap:20px;align-items:start}
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap}
+  .back{font-weight:900;background:var(--paper);border:3px solid var(--ink);border-radius:12px;padding:6px 14px;box-shadow:3px 3px 0 var(--ink)}
+  .progress{flex:1;min-width:160px;max-width:420px;height:16px;border:3px solid var(--ink);border-radius:999px;background:var(--paper);overflow:hidden}
+  .progress i{display:block;height:100%;background:var(--mint);transition:width .4s}
+  .step-no{font-weight:900}
+
+  .scene .who{font-size:4rem;text-align:center;line-height:1.2}
+  .scene h3{font-size:1.45rem;font-weight:900;margin:8px 0 6px;line-height:1.5}
+  .scene p.q{font-size:1.15rem;font-weight:700;color:var(--warm);margin-top:8px}
+  .bubble{position:relative;background:#fff;border:3px solid var(--ink);border-radius:18px;padding:14px 16px;margin-top:14px;font-size:1.1rem}
+
+  .choices{display:flex;flex-direction:column;gap:14px}
+  .choice{width:100%;text-align:left;background:#fff;border:3px solid var(--ink);border-radius:16px;padding:14px 16px;font-size:1.15rem;font-weight:700;box-shadow:4px 4px 0 var(--ink);display:flex;gap:12px;align-items:center;transition:transform .12s, background .2s}
+  .choice:hover:not(:disabled){transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--ink)}
+  .choice:disabled{cursor:default}
+  .choice .k{flex:none;width:34px;height:34px;border-radius:50%;border:2px solid var(--ink);display:grid;place-items:center;font-weight:900;background:var(--sun-soft)}
+  .choice.warm{background:var(--mint-soft)}
+  .choice.thorn{background:var(--thorn-soft)}
+  .choice.cold{background:var(--sky-soft)}
+  .choice.ok{background:var(--sun-soft)}
+  .choice.dim{opacity:.45}
+  .choice.shake{animation:shake .4s}
+  @keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+
+  .feedback{margin-top:16px;border:3px solid var(--ink);border-radius:16px;padding:14px 16px;font-size:1.08rem;display:none}
+  .feedback.show{display:block;animation:rise .3s}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}}
+  .feedback.good{background:var(--mint-soft)} .feedback.bad{background:var(--thorn-soft)} .feedback.mid{background:var(--sun-soft)}
+  .feedback b{font-size:1.2rem}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .btn{font-weight:900;font-size:1.1rem;border:3px solid var(--ink);border-radius:14px;padding:10px 20px;box-shadow:4px 4px 0 var(--ink);background:var(--sun)}
+  .btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+  .btn.alt{background:var(--paper)}
+  .say{font-size:.95rem;font-weight:900;border:2px solid var(--ink);border-radius:999px;padding:2px 10px;background:#fff;margin-left:6px;vertical-align:middle}
+
+  /* sandwich */
+  .sandwich{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+  .layer{border:3px solid var(--ink);border-radius:14px;padding:10px 14px;min-height:54px;display:flex;align-items:center;gap:10px;font-weight:700;background:#fff}
+  .layer .lbl{flex:none;font-size:.85rem;font-weight:900;border:2px solid var(--ink);border-radius:999px;padding:0 10px}
+  .layer.l1{background:#fbe4b8} .layer.l2{background:#d9efd2} .layer.l3{background:#fbe4b8}
+  .layer.empty{color:var(--grey);font-weight:400;border-style:dashed}
+  .layer.active{outline:4px solid var(--warm);outline-offset:2px}
+  .stepname{font-size:1.25rem;font-weight:900;margin-bottom:10px}
+
+  /* sort game */
+  .bins{display:grid;grid-template-columns:1fr;gap:14px}
+  .bin{text-align:left;border:3px solid var(--ink);border-radius:16px;padding:14px 16px;box-shadow:4px 4px 0 var(--ink);display:flex;gap:14px;align-items:center;transition:transform .12s}
+  .bin:hover:not(:disabled){transform:translate(-2px,-2px)}
+  .bin .e{font-size:2.3rem;flex:none}
+  .bin b{display:block;font-size:1.2rem}
+  .bin span{font-size:.98rem}
+  .binA{background:var(--sun-soft)} .binB{background:var(--sky-soft)} .binC{background:var(--warm-soft)}
+  .bin.right{outline:5px solid var(--mint);outline-offset:2px}
+  .bin.wrong{animation:shake .4s}
+  .pause-btn{width:150px;height:150px;margin:6px auto 4px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;text-align:center;font-weight:900;font-size:1.3rem;box-shadow:0 10px 0 #000, 0 10px 0 3px var(--ink);border:4px solid #fff;outline:3px solid var(--ink)}
+  .pause-btn small{display:block;font-size:.85rem;font-weight:700}
+  .pause-btn.pressed{transform:translateY(8px);box-shadow:0 2px 0 #000}
+  .think{display:none;margin-top:12px}
+  .think.show{display:block;animation:rise .3s}
+  .think li{list-style:none;padding:6px 0;font-weight:700;border-bottom:2px dotted #c9b48a}
+
+  /* end */
+  .end{text-align:center;max-width:640px;margin:10px auto}
+  .end .medal{font-size:5rem}
+  .end h2{font-size:2rem;font-weight:900}
+  .end .score{font-size:1.4rem;font-weight:900;margin:8px 0}
+  .end ul{text-align:left;margin:14px 0 4px 0}
+  .end li{list-style:none;background:#fff;border:2px solid var(--ink);border-radius:12px;padding:8px 12px;margin:8px 0;font-weight:700}
+
+  .confetti{position:fixed;top:-20px;font-size:1.6rem;pointer-events:none;animation:fall linear forwards;z-index:50}
+  @keyframes fall{to{transform:translateY(110vh) rotate(540deg);opacity:.8}}
+
+  .hidden{display:none!important}
+  footer{text-align:center;margin-top:26px;font-size:.9rem;color:#5d4f45}
+
+  @media (max-width:820px){
+    .modes,.rules{grid-template-columns:1fr}
+    .game{grid-template-columns:1fr}
+    .logo h1{font-size:1.4rem}
+    .hero h2{font-size:1.6rem}
+    .scene .who{font-size:3.2rem}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo" id="homeLogo" role="button" tabindex="0" aria-label="回首頁">
+      <span class="icon">💬</span>
+      <div><h1>暖暖話小達人</h1><small>說話溫柔一點，教室就溫暖一點</small></div>
+    </div>
+    <div class="heart-box" title="收集到的暖暖愛心">💗 <span class="pop" id="heartCount">0</span></div>
+  </header>
+
+  <!-- HOME -->
+  <section id="home">
+    <div class="hero">
+      <span class="tag">今天的任務</span>
+      <h2>把「刺刺話」變成「暖暖話」！</h2>
+      <p>選一個關卡開始，每說對一句暖暖話，就能收集一顆 💗</p>
+    </div>
+    <div class="modes">
+      <button class="card mode m1" data-mode="choose">
+        <span class="big">🌷</span>
+        <h3>第 1 關｜暖暖話挑戰</h3>
+        <p>遇到這些狀況，哪一句話最溫柔、最能讓大家都舒服？</p>
+        <span class="go">開始挑戰 →</span>
+      </button>
+      <button class="card mode m2" data-mode="sandwich">
+        <span class="big">🥪</span>
+        <h3>第 2 關｜回饋三明治</h3>
+        <p>同學給你看作品，用「讚美＋建議＋鼓勵」做出一份暖心三明治！</p>
+        <span class="go">開始製作 →</span>
+      </button>
+      <button class="card mode m3" data-mode="pause">
+        <span class="big">⏸️</span>
+        <h3>第 3 關｜按下暫停鍵</h3>
+        <p>先停一下想一想：這件事是讓一讓、說出來，還是要找老師？</p>
+        <span class="go">開始判斷 →</span>
+      </button>
+    </div>
+    <div class="rules">
+      <div class="rule"><span class="e">🌱</span><div><b>暖暖話</b><br>溫柔、體貼，讓人聽了想更好。</div></div>
+      <div class="rule"><span class="e">🌵</span><div><b>刺刺話</b><br>罵人、取笑，讓人聽了會受傷。</div></div>
+      <div class="rule"><span class="e">🧊</span><div><b>冷冷話</b><br>不理人、冷淡，也會讓人難過。</div></div>
+    </div>
+  </section>
+
+  <!-- MODE 1: choose -->
+  <section id="choose" class="hidden">
+    <div class="topbar">
+      <button class="back" data-back>← 回首頁</button>
+      <div class="progress"><i id="p1"></i></div>
+      <span class="step-no" id="n1"></span>
+    </div>
+    <div class="game">
+      <div class="card scene">
+        <div class="who" id="c-emoji"></div>
+        <span class="tag" id="c-tag"></span>
+        <h3 id="c-text"></h3>
+        <p class="q">你會怎麼說／怎麼做呢？</p>
+      </div>
+      <div>
+        <div class="choices" id="c-choices"></div>
+        <div class="feedback" id="c-fb"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODE 2: sandwich -->
+  <section id="sandwich" class="hidden">
+    <div class="topbar">
+      <button class="back" data-back>← 回首頁</button>
+      <div class="progress"><i id="p2"></i></div>
+      <span class="step-no" id="n2"></span>
+    </div>
+    <div class="game">
+      <div class="card scene">
+        <div class="who" id="s-emoji"></div>
+        <span class="tag" id="s-tag"></span>
+        <h3 id="s-text"></h3>
+        <div class="sandwich">
+          <div class="layer l1 empty" id="L0"><span class="lbl">🍞 讚美</span><span class="txt">先說他做得好的地方</span></div>
+          <div class="layer l2 empty" id="L1"><span class="lbl">🥬 建議</span><span class="txt">再溫柔地給一個建議</span></div>
+          <div class="layer l3 empty" id="L2"><span class="lbl">🍞 鼓勵</span><span class="txt">最後給他加油打氣</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="stepname" id="s-step"></div>
+        <div class="choices" id="s-choices"></div>
+        <div class="feedback" id="s-fb"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODE 3: pause -->
+  <section id="pause" class="hidden">
+    <div class="topbar">
+      <button class="back" data-back>← 回首頁</button>
+      <div class="progress"><i id="p3"></i></div>
+      <span class="step-no" id="n3"></span>
+    </div>
+    <div class="game">
+      <div class="card scene">
+        <div class="who" id="z-emoji"></div>
+        <h3 id="z-text"></h3>
+        <button class="pause-btn" id="pauseBtn">⏸ 暫停<small>先想一想</small></button>
+        <div class="think" id="think">
+          <ul>
+            <li>① 性質題：這是一時的面子，還是安全、原則？</li>
+            <li>② 計算題：吵架 5 分鐘 vs. 快樂下課 10 分鐘，值得嗎？</li>
+            <li>③ 解法題：選右邊最適合的做法！</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="bins" id="bins">
+          <button class="bin binA" data-bin="A" disabled><span class="e">✌️</span><div><b>A. 快幾秒的小事</b><span>讓一讓、說沒關係，或剪刀石頭布 3 秒解決！</span></div></button>
+          <button class="bin binB" data-bin="B" disabled><span class="e">🙋</span><div><b>B. 小摩擦、小狀況</b><span>溫和堅定地說：「你這樣我不舒服，請停止。」</span></div></button>
+          <button class="bin binC" data-bin="C" disabled><span class="e">🏃</span><div><b>C. 安全、受傷或大事</b><span>立刻報告老師，請老師處理！</span></div></button>
+        </div>
+        <div class="feedback" id="z-fb"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- END -->
+  <section id="end" class="hidden">
+    <div class="card end">
+      <div class="medal" id="e-medal">🏅</div>
+      <h2 id="e-title"></h2>
+      <div class="score" id="e-score"></div>
+      <p id="e-msg"></p>
+      <ul id="e-list"></ul>
+      <div class="row" style="justify-content:center">
+        <button class="btn" id="e-again">再玩一次</button>
+        <button class="btn alt" data-back>回首頁</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>💡 小提醒：溫柔不是什麼都忍耐——說出自己的感受，也可以很溫柔。</footer>
+</div>
+
+<script>
+/* ---------- 資料 ---------- */
+const SCENES = [
+  {e:"🎨😞", tag:"美勞課", t:"小明的畫不小心塗出界了，他看起來很沮喪。", o:[
+    {s:"「你的顏色配得好漂亮！出界一點點沒關係，下次慢慢塗就好。」", k:"warm", f:"先看見他的優點，再安慰他，小明一定會覺得好多了！"},
+    {s:"「哈哈哈，你塗得好醜喔！」", k:"thorn", f:"取笑別人的作品是刺刺話，會讓人更難過、不想再畫畫。"},
+    {s:"「喔。」然後轉頭做自己的事。", k:"cold", f:"冷冷的回應會讓人覺得沒有人在乎他。"}]},
+  {e:"✂️😥", tag:"分組活動", t:"分組做海報時，小美把要貼的資料剪錯了。", o:[
+    {s:"「你怎麼這麼笨，害我們全組完蛋了！」", k:"thorn", f:"罵人「笨」是刺刺話。每個人都會出錯，責怪不能讓事情變好。"},
+    {s:"「沒關係，我們一起想辦法補救！」", k:"warm", f:"一起想辦法，是最棒的團隊精神！"},
+    {s:"「我不管，你自己弄好。」", k:"cold", f:"把同伴丟下不管，會讓她覺得很孤單。"}]},
+  {e:"🍱🙂", tag:"排隊打菜", t:"打菜排隊時，同學站到你前面一個位置。", o:[
+    {s:"大聲吼：「你插隊！我要去跟老師講！」", k:"thorn", f:"只差一個位置，是不值得爭吵的小事。大吼會讓大家都不開心喔。"},
+    {s:"瞪他一眼，整個中午都不跟他說話。", k:"cold", f:"生悶氣不能解決問題，自己也不快樂。"},
+    {s:"輕輕拍拍他：「你有看到我嗎？我也在排隊喔！」", k:"warm", f:"不用吵，也不用委屈自己——用平常的語氣提醒一下，對方通常就懂了！"}]},
+  {e:"🚶💥", tag:"走廊上", t:"走路時，同學不小心擦撞到你的肩膀，他說：「對不起！」", o:[
+    {s:"「沒關係，不小心的，沒事！」", k:"warm", f:"對方已經道歉了，說聲「沒關係」，大家都輕鬆。"},
+    {s:"「你沒長眼睛喔？」", k:"thorn", f:"對方不是故意的，刺刺話會讓小事變成大吵架。"},
+    {s:"不說話，用力「哼」一聲走掉。", k:"cold", f:"對方道歉了卻被冷冷對待，他會很尷尬。"}]},
+  {e:"🎤😰", tag:"上台報告", t:"同學上台報告很緊張，講得結結巴巴。", o:[
+    {s:"在台下和旁邊的人偷笑。", k:"cold", f:"偷笑雖然沒說話，台上的人看到會更緊張、更難過。"},
+    {s:"「講那什麼東西，聽不懂啦！」", k:"thorn", f:"這句話會讓他以後都不敢上台了。"},
+    {s:"「你很勇敢！下次可以再大聲一點點，加油！」", k:"warm", f:"先稱讚勇氣，再給一個小小建議，這就是友善回饋！"}]},
+  {e:"👋🧒", tag:"下課時間", t:"新轉來的同學中文還不太流利，他想加入你們一起玩。", o:[
+    {s:"「歡迎你！我們教你怎麼玩，一起來！」", k:"warm", f:"包容和歡迎，讓新朋友感覺自己是班上的一份子！"},
+    {s:"「你講話好奇怪，不要跟我們玩。」", k:"thorn", f:"因為別人不一樣就排擠他，是很傷人的事。"},
+    {s:"「我們人已經夠了。」", k:"cold", f:"把人擋在外面，新同學會覺得很孤單。多一個人，可能更好玩喔！"}]},
+  {e:"📝😢", tag:"發考卷", t:"你的好朋友考試考不好，趴在桌上哭。", o:[
+    {s:"「這麼簡單也不會喔？」", k:"thorn", f:"朋友已經很難過了，這句話像在傷口上撒鹽。"},
+    {s:"「你一定很難過，要不要我陪你一起訂正？」", k:"warm", f:"先說出他的感受，再伸出手幫忙，你是最暖的朋友！"},
+    {s:"「哭什麼，又不是什麼大事。」", k:"cold", f:"對你是小事，對他可能是大事。先接住他的心情吧！"}]},
+  {e:"🧽😕", tag:"借文具", t:"同學借你的橡皮擦，還回來時弄得髒髒的。", o:[
+    {s:"「謝謝你還我！下次可以小心一點嗎？」", k:"warm", f:"先道謝，再說出希望——溫柔又清楚！"},
+    {s:"「你很髒耶，以後都不借你了！」", k:"thorn", f:"可以說出不舒服，但不需要罵人或威脅。"},
+    {s:"一把搶回來，什麼都不說。", k:"cold", f:"對方不知道你在意什麼，下次還是可能發生。"}]},
+  {e:"🏃‍♂️🥢", tag:"接力賽", t:"體育課接力賽，同學掉棒，你們這隊輸了。", o:[
+    {s:"「都是你害的啦！」", k:"thorn", f:"他自己一定已經很自責了，責怪只會讓他更難受。"},
+    {s:"不理他，自己走回教室。", k:"cold", f:"團隊是一起贏、也一起輸的喔。"},
+    {s:"「你已經很努力跑了！下次我們一起練習交棒。」", k:"warm", f:"輸了也能一起變更好，這才是真正的好隊友！"}]},
+  {e:"😂😣", tag:"說出感受", t:"同學把你的糗事講給大家聽，大家都笑了，你覺得很不舒服。", o:[
+    {s:"「我覺得有點不舒服，可以請你不要再說了嗎？」", k:"warm", f:"溫柔不是忍耐！清楚說出感受、提出請求，這就是溫柔又堅定。"},
+    {s:"「你很討厭耶！我也要講你的糗事！」", k:"thorn", f:"報復回去，只會讓兩個人都受傷。"},
+    {s:"忍住不說，自己生悶氣好幾天。", k:"cold", f:"一直忍耐，對方不知道你的感受，你也會很辛苦。"}]}
+];
+
+const WORKS = [
+  {e:"🖼️👧", who:"小安", t:"小安畫了〈我的家〉，顏色很豐富，可是家人畫得好小好小。", steps:[
+    [{s:"「你的顏色好豐富，紅屋頂看起來好溫暖！」",k:"best"},{s:"「畫得不錯。」",k:"ok"},{s:"「這看起來好像幼兒園小朋友畫的。」",k:"bad"}],
+    [{s:"「人畫那麼小，根本看不到啦！」",k:"bad"},{s:"「如果把家人畫大一點，大家就更看得清楚了。」",k:"best"},{s:"「嗯……人好像有點小。」",k:"ok"}],
+    [{s:"「加油。」",k:"ok"},{s:"「反正你本來就不太會畫。」",k:"bad"},{s:"「我好期待你的下一張畫！」",k:"best"}]]},
+  {e:"📖🧑", who:"小宇", t:"小宇寫了作文〈我的小狗〉，寫得很生動，可是錯字有點多。", steps:[
+    [{s:"「寫那麼長，好無聊喔。」",k:"bad"},{s:"「你寫小狗搖尾巴的樣子好生動，我好像真的看到了！」",k:"best"},{s:"「寫得還可以。」",k:"ok"}],
+    [{s:"「有幾個字寫錯了，交出去前可以再檢查一次喔。」",k:"best"},{s:"「錯字一大堆，你到底有沒有認真？」",k:"bad"},{s:"「有錯字。」",k:"ok"}],
+    [{s:"「下次別再寫錯了啦。」",k:"bad"},{s:"「下次加油。」",k:"ok"},{s:"「你很會說故事，繼續寫下去！」",k:"best"}]]},
+  {e:"✈️👦", who:"小傑", t:"小傑折的紙飛機飛得好遠，可是折線有點歪歪的。", steps:[
+    [{s:"「還不錯啦。」",k:"ok"},{s:"「飛那麼遠也沒什麼了不起。」",k:"bad"},{s:"「哇！你的飛機飛得好遠，好厲害！」",k:"best"}],
+    [{s:"「折的時候把線對齊壓平，可能會飛得更直喔。」",k:"best"},{s:"「線有點歪。」",k:"ok"},{s:"「歪成這樣，醜死了。」",k:"bad"}],
+    [{s:"「你可以教我怎麼折嗎？我們一起再折一架！」",k:"best"},{s:"「我折的一定比你好。」",k:"bad"},{s:"「再試試看。」",k:"ok"}]]},
+  {e:"🎶👧", who:"小芸", t:"小芸表演直笛，節奏很穩，可是有幾個高音吹得太大聲了。", steps:[
+    [{s:"「你的節奏好穩，聽起來好舒服！」",k:"best"},{s:"「吹得普普通通啦。」",k:"bad"},{s:"「吹得還好。」",k:"ok"}],
+    [{s:"「有點吵。」",k:"ok"},{s:"「好刺耳，我耳朵好痛！」",k:"bad"},{s:"「有幾個高音可以吹輕一點，會更好聽喔。」",k:"best"}],
+    [{s:"「你還是不要再吹了。」",k:"bad"},{s:"「你練習得好認真，下次表演我還要聽！」",k:"best"},{s:"「繼續練。」",k:"ok"}]]}
+];
+const STEP_NAMES = ["🍞 第一片麵包：讚美","🥬 中間的菜：建議","🍞 第二片麵包：鼓勵"];
+const STEP_TIP = {
+  ok:["這句沒有錯，但可以更「具體」喔！說出他哪裡做得好，他會更開心。","這句有點太直接了，試試看說出「怎麼做會更好」。","這句也可以，但再多一點溫度會更棒！"],
+  bad:["這是刺刺話！讚美要真心，不能變成取笑喔。","這是刺刺話！建議是要幫助別人，不是罵人。","這是刺刺話！鼓勵要讓人想再試一次喔。"]
+};
+
+const PAUSE = [
+  {e:"🚰🧒🧒", t:"你和同學同時走到飲水機前，都想先裝水。", a:"A", f:"幾秒鐘的事！讓他先裝，或剪刀石頭布，3 秒就解決。"},
+  {e:"🍱", t:"打菜排隊時，前後只差一個位置。", a:"A", f:"只差一個位置，不用吵！輕輕說一句「我也在排隊喔」就好。"},
+  {e:"👟", t:"不小心被後面的同學踩到鞋跟，他說「對不起」。", a:"A", f:"對方不是故意的，一句「沒關係」就好。"},
+  {e:"⚽", t:"下課時，你和同學同時想玩同一顆球。", a:"A", f:"剪刀石頭布，或輪流玩，很快就解決了！"},
+  {e:"🤝💨", t:"走廊上被同學輕輕擦撞到肩膀。", a:"A", f:"輕輕碰到、不小心的，說聲「沒事」就好。"},
+  {e:"🪑🦶", t:"後面的同學一直用腳踢你的椅子。", a:"B", f:"這會讓你不舒服，可以溫和堅定地說：「請不要再踢我的椅子。」如果他一直不停，再請老師幫忙。"},
+  {e:"✏️", t:"同學拿了你的鉛筆，一直不還你。", a:"B", f:"先清楚地說：「這是我的鉛筆，請還給我。」"},
+  {e:"🗣️😝", t:"有人一直模仿你講話的樣子，取笑你。", a:"B", f:"說出來：「你這樣我不舒服，請停止。」一直發生的話，要告訴老師。"},
+  {e:"🎲", t:"玩遊戲時，同學偷偷改規則作弊。", a:"B", f:"規則和公平很重要，可以說：「我們要遵守規則，誠實才公平！」"},
+  {e:"🪜", t:"有同學在樓梯間推來推去，差點有人跌倒。", a:"C", f:"這和「安全」有關，要立刻報告老師！"},
+  {e:"🩹", t:"同學在操場跌倒，膝蓋流血了。", a:"C", f:"有人受傷了，馬上找老師幫忙！"},
+  {e:"✂️", t:"有人拿著剪刀對著別人揮來揮去。", a:"C", f:"很危險！不要自己去搶，立刻報告老師。"},
+  {e:"🚪🙅", t:"放學時，有不認識的大人要你跟他走。", a:"C", f:"絕對不能跟陌生人走！立刻找老師或學校的大人。"}
+];
+const BIN_NAME = {A:"A. 快幾秒的小事", B:"B. 小摩擦、小狀況", C:"C. 安全、受傷或大事"};
+
+/* ---------- 工具 ---------- */
+const $ = s => document.querySelector(s);
+const shuffle = a => { a = a.slice(); for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+let hearts = 0;
+try { hearts = parseInt(localStorage.getItem("kindHearts")||"0",10)||0; } catch(e){}
+function addHeart(n=1){
+  hearts += n; $("#heartCount").textContent = hearts;
+  const p = $("#heartCount"); p.classList.remove("bump"); void p.offsetWidth; p.classList.add("bump");
+  try { localStorage.setItem("kindHearts", hearts); } catch(e){}
+}
+$("#heartCount").textContent = hearts;
+
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices(); } catch(e){} }
+try { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; } catch(e){}
+function speak(text){
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text.replace(/[「」]/g,""));
+    u.lang = "zh-TW"; u.rate = .9;
+    const v = voices.find(v=>v.lang==="zh-TW") || voices.find(v=>/zh/i.test(v.lang));
+    if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function sayBtn(text){
+  const b = document.createElement("button"); b.className="say"; b.textContent="🔊 唸唸看";
+  b.onclick = ev => { ev.stopPropagation(); speak(text); }; return b;
+}
+function confetti(){
+  const items = ["💗","🌷","⭐","✨","🌱"];
+  for (let i=0;i<26;i++){
+    const s = document.createElement("span"); s.className="confetti";
+    s.textContent = items[i%items.length];
+    s.style.left = Math.random()*100+"vw";
+    s.style.animationDuration = (2+Math.random()*2)+"s";
+    s.style.animationDelay = Math.random()*.6+"s";
+    document.body.appendChild(s); setTimeout(()=>s.remove(),5000);
+  }
+}
+function show(id){
+  ["home","choose","sandwich","pause","end"].forEach(x=>$("#"+x).classList.toggle("hidden", x!==id));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function setProg(n, i, total){ $("#p"+n).style.width = (i/total*100)+"%"; $("#n"+n).textContent = `${Math.min(i+1,total)} / ${total}`; }
+function fb(el, cls, html){ el.className = "feedback show "+cls; el.innerHTML = html; }
+function hideFb(el){ el.className = "feedback"; el.innerHTML = ""; }
+function nextBtn(label, fn){ const r=document.createElement("div"); r.className="row"; const b=document.createElement("button"); b.className="btn"; b.textContent=label; b.onclick=fn; r.appendChild(b); return r; }
+
+let currentMode = null;
+
+/* ---------- 第 1 關 ---------- */
+let C = {};
+function startChoose(){
+  currentMode="choose"; C = {list: shuffle(SCENES).slice(0,8), i:0, score:0, first:true};
+  show("choose"); renderChoose();
+}
+function renderChoose(){
+  const s = C.list[C.i]; C.first = true;
+  setProg(1, C.i, C.list.length);
+  $("#c-emoji").textContent = s.e; $("#c-tag").textContent = s.tag; $("#c-text").textContent = s.t;
+  hideFb($("#c-fb"));
+  const box = $("#c-choices"); box.innerHTML = "";
+  shuffle(s.o).forEach((o,idx)=>{
+    const b = document.createElement("button"); b.className="choice";
+    b.innerHTML = `<span class="k">${"ABC"[idx]}</span><span>${o.s}</span>`;
+    b.onclick = () => pickChoose(b,o);
+    box.appendChild(b);
+  });
+}
+function pickChoose(btn,o){
+  const fbEl = $("#c-fb");
+  if (o.k==="warm"){
+    if (C.first){ C.score++; addHeart(); }
+    btn.classList.add("warm");
+    [...$("#c-choices").children].forEach(b=>{ b.disabled=true; if(b!==btn) b.classList.add("dim"); });
+    fb(fbEl,"good",`<b>🌱 暖暖話！${C.first?" 💗 +1":""}</b><br>${o.f}`);
+    fbEl.querySelector("b").appendChild(sayBtn(o.s));
+    const last = C.i === C.list.length-1;
+    fbEl.appendChild(nextBtn(last?"看結果 🎉":"下一題 →", ()=>{ if(last) endGame("choose"); else { C.i++; renderChoose(); } }));
+  } else {
+    C.first = false;
+    btn.disabled = true; btn.classList.add(o.k, "shake");
+    fb(fbEl,"bad",`<b>${o.k==="thorn"?"🌵 這是刺刺話":"🧊 這是冷冷話"}</b><br>${o.f}<br>再想想看，哪一句最溫暖？`);
+  }
+}
+
+/* ---------- 第 2 關 ---------- */
+let S = {};
+function startSandwich(){
+  currentMode="sandwich"; S = {list: shuffle(WORKS), i:0, step:0, score:0, first:true, picks:[]};
+  show("sandwich"); renderWork();
+}
+function renderWork(){
+  const w = S.list[S.i]; S.step = 0; S.picks = [];
+  setProg(2, S.i, S.list.length);
+  $("#s-emoji").textContent = w.e; $("#s-tag").textContent = `${w.who}的作品`; $("#s-text").textContent = w.t;
+  const ph = ["先說他做得好的地方","再溫柔地給一個建議","最後給他加油打氣"];
+  [0,1,2].forEach(i=>{ const L=$("#L"+i); L.classList.add("empty"); L.classList.remove("active"); L.querySelector(".txt").textContent = ph[i]; });
+  renderStep();
+}
+function renderStep(){
+  const w = S.list[S.i]; S.first = true;
+  [0,1,2].forEach(i=>$("#L"+i).classList.toggle("active", i===S.step));
+  $("#s-step").textContent = STEP_NAMES[S.step];
+  hideFb($("#s-fb"));
+  const box = $("#s-choices"); box.innerHTML="";
+  shuffle(w.steps[S.step]).forEach((o,idx)=>{
+    const b=document.createElement("button"); b.className="choice";
+    b.innerHTML = `<span class="k">${"ABC"[idx]}</span><span>${o.s}</span>`;
+    b.onclick = () => pickStep(b,o);
+    box.appendChild(b);
+  });
+}
+function pickStep(btn,o){
+  const fbEl = $("#s-fb");
+  if (o.k==="bad"){
+    S.first=false; btn.disabled=true; btn.classList.add("thorn","shake");
+    fb(fbEl,"bad",`<b>🌵 喔喔！</b><br>${STEP_TIP.bad[S.step]}`);
+    return;
+  }
+  if (o.k==="ok"){
+    S.first=false; btn.disabled=true; btn.classList.add("ok","shake");
+    fb(fbEl,"mid",`<b>🤔 還可以更好！</b><br>${STEP_TIP.ok[S.step]}`);
+    return;
+  }
+  if (S.first){ S.score++; addHeart(); }
+  const L = $("#L"+S.step); L.classList.remove("empty"); L.querySelector(".txt").textContent = o.s;
+  S.picks.push(o.s);
+  [...$("#s-choices").children].forEach(b=>{ b.disabled=true; if(b!==btn) b.classList.add("dim"); });
+  btn.classList.add("warm");
+  if (S.step < 2){
+    fb(fbEl,"good",`<b>✨ 很棒！${S.first?" 💗 +1":""}</b>`);
+    fbEl.appendChild(nextBtn("下一層 →", ()=>{ S.step++; renderStep(); }));
+  } else {
+    [0,1,2].forEach(i=>$("#L"+i).classList.remove("active"));
+    const full = S.picks.join("");
+    fb(fbEl,"good",`<b>🥪 暖心三明治完成！${S.first?" 💗 +1":""}</b><br>完整說一遍給${S.list[S.i].who}聽：<br><span style="font-weight:700">${full}</span>`);
+    fbEl.querySelector("b").appendChild(sayBtn(full));
+    confetti();
+    const last = S.i === S.list.length-1;
+    fbEl.appendChild(nextBtn(last?"看結果 🎉":"下一位同學 →", ()=>{ if(last) endGame("sandwich"); else { S.i++; renderWork(); } }));
+  }
+}
+
+/* ---------- 第 3 關 ---------- */
+let Z = {};
+function startPause(){
+  currentMode="pause"; Z = {list: shuffle(PAUSE).slice(0,8), i:0, score:0, first:true};
+  show("pause"); renderPause();
+}
+function renderPause(){
+  const z = Z.list[Z.i]; Z.first = true;
+  setProg(3, Z.i, Z.list.length);
+  $("#z-emoji").textContent = z.e; $("#z-text").textContent = z.t;
+  $("#pauseBtn").classList.remove("pressed"); $("#pauseBtn").classList.remove("hidden");
+  $("#think").classList.remove("show");
+  hideFb($("#z-fb"));
+  document.querySelectorAll(".bin").forEach(b=>{ b.disabled=true; b.classList.remove("right","wrong"); b.style.opacity=".55"; });
+}
+$("#pauseBtn").onclick = () => {
+  $("#pauseBtn").classList.add("pressed");
+  setTimeout(()=>{ $("#think").classList.add("show"); document.querySelectorAll(".bin").forEach(b=>{ b.disabled=false; b.style.opacity="1"; }); }, 250);
+};
+document.querySelectorAll(".bin").forEach(b=> b.onclick = () => {
+  const z = Z.list[Z.i], fbEl = $("#z-fb"), pick = b.dataset.bin;
+  if (pick === z.a){
+    if (Z.first){ Z.score++; addHeart(); }
+    b.classList.add("right");
+    document.querySelectorAll(".bin").forEach(x=>x.disabled=true);
+    fb(fbEl,"good",`<b>👍 想得好！${Z.first?" 💗 +1":""}</b><br>${z.f}`);
+    const last = Z.i === Z.list.length-1;
+    fbEl.appendChild(nextBtn(last?"看結果 🎉":"下一題 →", ()=>{ if(last) endGame("pause"); else { Z.i++; renderPause(); } }));
+  } else {
+    Z.first=false; b.classList.remove("wrong"); void b.offsetWidth; b.classList.add("wrong");
+    const hint = pick==="A" ? "這件事可能會讓人受傷或一直不舒服，不能只是讓一讓喔。" :
+                 pick==="C" && z.a==="A" ? "這只是幾秒鐘的小事，自己就能解決，不用麻煩老師喔！" :
+                 pick==="C" ? "先試試看自己溫和地說出來，如果對方不停，再找老師。" :
+                 z.a==="A" ? "這是幾秒鐘的小事，讓一讓就好，不用特別去說對方。" :
+                 "這件事和安全有關，自己說可能不夠，要找大人幫忙！";
+    fb(fbEl,"mid",`<b>🤔 再想想！</b><br>${hint}`);
+  }
+});
+
+/* ---------- 結算 ---------- */
+function endGame(mode){
+  const conf = {
+    choose:{s:C.score, t:C.list.length, title:"暖暖話挑戰完成！", tips:["先看見別人的優點","別人難過時，先接住他的心情","溫柔也可以說出自己的感受"]},
+    sandwich:{s:S.score, t:S.list.length*3, title:"回饋三明治大廚！", tips:["🍞 讚美：說出「具體」哪裡好","🥬 建議：說「怎麼做會更好」","🍞 鼓勵：讓他想再試一次"]},
+    pause:{s:Z.score, t:Z.list.length, title:"暫停鍵高手！", tips:["✌️ 快幾秒的小事：讓一讓、剪刀石頭布","🙋 小摩擦：溫和堅定地說「請停止」","🏃 安全、受傷：立刻報告老師"]}
+  }[mode];
+  const r = conf.s/conf.t;
+  $("#e-medal").textContent = r>=.9 ? "🏆" : r>=.6 ? "🏅" : "🌱";
+  $("#e-title").textContent = conf.title;
+  $("#e-score").textContent = `一次就答對：${conf.s} / ${conf.t}　💗`;
+  $("#e-msg").textContent = r>=.9 ? "太厲害了！你是班上的暖暖話小達人！" : r>=.6 ? "很棒喔！再練習一次，會更熟練！" : "每個人都在學習，再挑戰一次吧！";
+  $("#e-list").innerHTML = "<li style='background:var(--sun-soft)'>📌 記住這三件事：</li>" + conf.tips.map(t=>`<li>${t}</li>`).join("");
+  $("#e-again").onclick = () => START[mode]();
+  show("end"); if (r>=.6) confetti();
+}
+
+const START = {choose:startChoose, sandwich:startSandwich, pause:startPause};
+document.querySelectorAll("[data-mode]").forEach(b=> b.onclick = () => START[b.dataset.mode]());
+document.querySelectorAll("[data-back]").forEach(b=> b.onclick = () => { try{speechSynthesis.cancel();}catch(e){} show("home"); });
+$("#homeLogo").onclick = () => show("home");
+$("#homeLogo").onkeydown = e => { if(e.key==="Enter") show("home"); };
+</script>
+</body>
+</html>
